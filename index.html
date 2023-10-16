@@ -1,0 +1,471 @@
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Chessboard with Three.js</title>
+    <style>
+        body { margin: 0; }
+        canvas { display: block; }
+    </style>
+</head>
+<body>
+    <!-- <script src="https://threejs.org/build/three.js"></script>
+    <script src="https://unpkg.com/three-orbitcontrols@2.110.3/OrbitControls.js"></script> -->
+
+        <script type="importmap">
+          {
+            "imports": {
+              "three": "https://unpkg.com/three@v0.157.0/build/three.module.js",
+              "three/addons/": "https://unpkg.com/three@v0.157.0/examples/jsm/"
+            }
+          }
+        </script>
+        <script type="module">
+          import * as THREE from 'three';
+          import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+          import { FontLoader } from 'three/addons/loaders/FontLoader.js';
+          import { TextGeometry } from 'three/addons/geometries/TextGeometry.js';
+
+        // Scene, camera, and renderer setup
+        var scene = new THREE.Scene();
+        var camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+        var renderer = new THREE.WebGLRenderer();
+        const raycaster = new THREE.Raycaster();
+        const mouse = new THREE.Vector2();
+
+
+        // Dark violet backgound
+        renderer.setClearColor(0x110011);
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+
+        // Controls for camera
+        var controls = new OrbitControls( camera, renderer.domElement );
+
+        // Animation loop
+        var animate = function () {
+            requestAnimationFrame(animate);
+            controls.update(); // Only required if controls.enableDamping = true, or if controls.autoRotate = true
+            renderer.render(scene, camera);
+        };
+
+        animate();
+
+        // Background stars
+        class Stars {
+            constructor(amount, distributionRadius){
+                this.starsAmount = amount;
+                this.distributionRadius = distributionRadius;
+            }
+            draw() {
+                const starsGeometry = new THREE.BufferGeometry();
+                const starsVertices = [];
+
+                for (let i = 0; i < this.starsAmount; i++) {
+                    const x = (Math.random() - 0.5) * this.distributionRadius * 2; // Распределение от -1000 до 1000 по оси X
+                    const y = (Math.random() - 0.5) * this.distributionRadius * 2;
+                    const z = (Math.random() - 0.5) * this.distributionRadius * 2;
+                    
+                    starsVertices.push(x, y, z);
+                }
+                starsGeometry.setAttribute('position', new THREE.Float32BufferAttribute(starsVertices, 3));
+                const starsMaterial = new THREE.PointsMaterial({ color: 0xFFFFFF, size: 1 });
+                return new THREE.Points(starsGeometry, starsMaterial);
+            }
+        };
+        const stars = new Stars(10000, 1000);
+        scene.add(stars.draw());
+
+        // Chessboard creation
+        class Tile {
+            #object3D = null;
+            constructor(color, size){
+                this.material = new THREE.MeshToonMaterial({color: color});
+                this.geometry = new THREE.BoxGeometry(size, size * 0.6, size);
+            }
+            draw (){
+                if (this.#object3D) {
+                    return this.#object3D;
+                }
+
+                this.#object3D = new THREE.Mesh(this.geometry, this.material)
+
+                return this.#object3D;
+            }
+
+        }
+        class Board {
+            #object3D = null;
+            board = new THREE.Group()
+
+            lightColor = 0xFFFFFF;
+            darktColor = 0x000000;
+
+            darkMaterial = new THREE.MeshToonMaterial({color: this.darktColor});
+
+            tileSize = 1;
+            tiles = [];
+
+            constructor(x, z){
+                this.xSize = x;
+                this.zSize = z;
+                this.tileShiftX = x / 2 - this.tileSize / 2;
+                this.tileShiftZ = z / 2 - this.tileSize / 2;
+            }
+            add (object, x, z){
+                this.board.add(object);
+                object.position.x = x - this.tileShiftX;
+                object.position.z = z - this.tileShiftZ;
+            }
+
+            draw (){
+                if (this.#object3D) {
+                    return this.#object3D;
+                }
+
+                for (var x = 0; x < this.xSize; x++) {
+                    for (var z = 0; z < this.zSize; z++) {
+                        var tileColor = (x + z) % 2 === 0 ? this.darktColor : this.lightColor;
+                        var tile = new Tile(tileColor, this.tileSize);
+
+                        // create first array element
+                        if( z === 0 ){ this.tiles[x] = []; };
+                        this.tiles[x][z] = tile;
+
+                        var tileDrawn = tile.draw();
+                        tileDrawn.position.x = x - this.tileShiftX;
+                        tileDrawn.position.z = z - this.tileShiftZ;
+                        tileDrawn.position.y = -(this.tileSize * 0.6 / 2);
+                        this.board.add(tileDrawn);
+                    }
+                }
+                this.#object3D = this.board;
+
+                return this.#object3D;
+            }
+        };
+        const board = new Board(8, 8);
+        scene.add(board.draw());
+
+        // Mech's frame class
+        class Frame {
+            cubeGeometry = new THREE.BoxGeometry(0.5, 0.5, 0.5);
+            cubeMaterial = new THREE.MeshStandardMaterial({color: 0x0000FF});
+
+            constructor(){
+                this.cube = new THREE.Mesh(this.cubeGeometry, this.cubeMaterial);
+                this.cube.position.y = 0.5;
+
+                this.model = this.cube;
+            }
+        }
+
+        // Mech's weapon class
+        class Tools {
+            toolGeometry = new THREE.BoxGeometry(0.7, 0.2, 0.2);
+            toolMaterial = new THREE.MeshStandardMaterial({color: 0xFF0000});
+
+            tools = new THREE.Group();
+            toolLeft  = new THREE.Mesh(this.toolGeometry, this.toolMaterial);
+            toolRight = new THREE.Mesh(this.toolGeometry, this.toolMaterial);
+
+            constructor (){
+                this.toolLeft.position.z = -0.35;
+                this.toolLeft.position.y = 0.6;
+    
+                this.toolRight.position.z = 0.35;
+                this.toolRight.position.y = 0.6;
+    
+                this.tools.add(this.toolLeft);
+                this.tools.add(this.toolRight);
+                this.model = this.tools
+            }
+        }
+
+        // Wheel class
+        class Wheel {
+            material = new THREE.MeshStandardMaterial({color: 0xff00ff});
+
+            constructor (size){
+                this.wheelGeometry = new THREE.CylinderGeometry(size, size, 0.3, 32);
+                this.wheel = new THREE.Mesh(this.wheelGeometry, this.material);
+                this.wheel.rotation.x = Math.PI / 2;
+                this.model = this.wheel;
+            }
+        }
+
+        // Chassis class
+        class Chassis {
+
+            wheelSize = 0.2;
+            cellShift = 0.3;
+            wheels = [];
+
+            chassis = new THREE.Group();
+
+            constructor (){
+                
+                for (let i of [+1, -1]) {
+                    for (let j of [+1, -1]) {
+                        let wheel = new Wheel(this.wheelSize);
+                        wheel.model.position.x = i * this.cellShift;
+                        wheel.model.position.z = j * this.cellShift;
+                        wheel.model.position.y = this.wheelSize;
+                        this.wheels.push(wheel);
+                        this.chassis.add(wheel.model);
+                    }
+                }
+                this.model = this.chassis;
+            }
+        }
+
+        // Mech's class
+        class Mech {
+            mech = new THREE.Group();
+
+            constructor (){
+                this.model = this.mech
+
+                this.frame = new Frame();
+                this.tools = new Tools();
+                this.chassis = new Chassis();
+
+                this.mech.add(this.frame.model);
+                this.mech.add(this.tools.model);
+                this.mech.add(this.chassis.model);
+
+                select(this.mech);
+            } 
+        }
+
+        // create mech
+        // board.add(new Mech(), 0, 0);
+        const mech = new Mech()
+        board.add(mech.model, 0, 0);
+
+        function select(group){
+            const coneGeometry = new THREE.ConeGeometry(0.5, 1, 32);
+            const coneMaterial = new THREE.MeshBasicMaterial({color: 0x00FF00, transparent: true, opacity: 0.7});
+            const cone = new THREE.Mesh(coneGeometry, coneMaterial);
+
+            cone.position.y = 2;
+            cone.rotation.x = Math.PI; // Перевернуть конус, чтобы он указывал вниз
+            cone.visible = false; // По умолчанию конус невидим
+            group.add(cone);
+
+            window.addEventListener('click', onDocumentMouseClick, false);
+            function onDocumentMouseClick(event) {
+                mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+                mouse.y = - (event.clientY / window.innerHeight) * 2 + 1;
+                raycaster.setFromCamera(mouse, camera);
+
+                const intersects = raycaster.intersectObjects(group.children);
+                // Обработка пересечений
+                if (intersects.length > 0) {
+                    cone.visible = true;
+                    showPossibleMoves(4);
+                } else {
+                    cone.visible = false;
+                    clearPossibleMoves();
+                }
+            }
+        }
+
+        // createStatuses(x, z){
+        //         const xPos = x - 3.5;
+        //         const zPos = z - 3.5;
+
+        //         const statuses = new THREE.Group();
+        //         // // WATER
+
+        //         // const waterGeometry = new THREE.SphereGeometry(0.15, 32);
+        //         // const waterMaterial = new THREE.MeshToonMaterial({color: 0x0000FF,transparent: true,opacity: 0.9});
+        //         // const water = new THREE.Mesh(waterGeometry, waterMaterial);
+
+        //         // water.position.x = xPos + 0.3;
+        //         // water.position.z = zPos + 0.3;
+        //         // water.position.y = 1;
+
+        //         // statuses.add(water);
+
+        //         // Fire
+        //         const flame = new THREE.Group();
+        //         const coneGeometry = new THREE.ConeGeometry(0.05, 0.28, 32);
+        //         const yellowMaterial = new THREE.MeshToonMaterial({color: 0xFFFF00,transparent: true,opacity: 0.9});
+        //         const redMaterial = new THREE.MeshToonMaterial({color: 0xFF0000,transparent: true,opacity: 0.9});
+
+        //         const cone1 = new THREE.Mesh(coneGeometry, yellowMaterial);
+        //         cone1.position.set( 0.048, 0.13,  0.048);
+        //         const cone2 = new THREE.Mesh(coneGeometry, yellowMaterial);
+        //         cone2.position.set(-0.048, 0.13,  0.048);
+        //         const cone3 = new THREE.Mesh(coneGeometry, yellowMaterial);
+        //         cone3.position.set( 0.048, 0.13, -0.048);
+        //         const cone4 = new THREE.Mesh(coneGeometry, yellowMaterial);
+        //         cone4.position.set(-0.048, 0.13, -0.048);
+        //         const cone5 = new THREE.Mesh(coneGeometry, redMaterial);
+        //         cone5.position.set(0, 0.25, 0);
+
+        //         const bottomGeometry = new THREE.SphereGeometry(0.12, 32);
+        //         const ball = new THREE.Mesh(bottomGeometry, redMaterial);
+
+        //         flame.add(cone1);
+        //         flame.add(cone2);
+        //         flame.add(cone3);
+        //         flame.add(cone4);
+        //         flame.add(cone5);
+        //         flame.add(ball);
+        //         flame.position.x = xPos + 0.4;
+        //         flame.position.z = zPos - 0.4;
+        //         flame.position.y = 0.5;
+
+
+        //         statuses.add(flame);
+
+        //         const flame1 = flame.clone() 
+        //         flame1.position.x = xPos + 0.4;
+        //         flame1.position.z = zPos + 0.4;
+        //         statuses.add(flame1);
+
+        //         const flame2 = flame.clone() 
+        //         flame2.position.x = xPos - 0.4;
+        //         flame2.position.z = zPos + 0.4;
+        //         statuses.add(flame2);
+
+        //         const flame3 = flame.clone() 
+        //         flame3.position.x = xPos - 0.4;
+        //         flame3.position.z = zPos - 0.4;
+        //         statuses.add(flame3);
+
+        //         // Cloud
+        //         const cloudMaterial = new THREE.MeshBasicMaterial({
+        //             color: 0xffffff,
+        //             transparent: true,
+        //             opacity: 0.5
+        //         });
+
+        //         // Создаем группу для облака
+        //         const cloud = new THREE.Group();
+
+        //         // Создаем сферы и добавляем их в группу облака
+        //         const sphereCount = 50;
+        //         for (let i = 0; i < sphereCount; i++) {
+        //             const sphereGeometry = new THREE.SphereGeometry(Math.random() * 0.4 + 0.01, 16, 16);
+        //             const sphere = new THREE.Mesh(sphereGeometry, cloudMaterial);
+        //             sphere.position.set(
+        //                 Math.random() * 0.6 - 0.3,
+        //                 Math.random() * 0.6 - 0.3,
+        //                 Math.random() * 0.6 - 0.3
+        //             );
+        //             cloud.add(sphere);
+        //         }
+        //         cloud.position.x = xPos;
+        //         cloud.position.z = zPos;
+        //         cloud.position.y = 0.5;
+        //         statuses.add(cloud);
+
+        //         return statuses;
+        //     }
+
+        const moveSpheres = [];
+        function showPossibleMoves(steps) {
+            // Создаем материал для возможных ходов (желтый)
+            const material = new THREE.MeshBasicMaterial({ color: 0xffff00, transparent: true, opacity: 0.5 });
+
+            // Предположим, что мех находится в позиции (x, y) на доске
+            const mechPosition = { x: 7, y: 7 }; // Настроить соответственно
+
+            // Добавляем сферы для каждой возможной позиции хода
+            for (let i = 1; i <= steps; i++) {
+                // Вертикальные и горизонтальные ходы
+                createSphere(mechPosition.x + i, mechPosition.y, material);
+                createSphere(mechPosition.x - i, mechPosition.y, material);
+                createSphere(mechPosition.x, mechPosition.y + i, material);
+                createSphere(mechPosition.x, mechPosition.y - i, material);
+            }
+        }
+
+        function createSphere(x, y, material) {
+            // Создаем геометрию сферы
+            const geometry = new THREE.SphereGeometry(0.1, 16, 16); // Радиус 0.1, сегменты: 16
+
+            // Создаем меш и добавляем его на сцену
+            const sphere = new THREE.Mesh(geometry, material);
+            sphere.position.set(x, 0.2, y); // y = 0.2, чтобы сфера была над доской
+            scene.add(sphere);
+
+            // Сохраняем сферу в массиве для последующего удаления
+            moveSpheres.push(sphere);
+        }
+
+        function clearPossibleMoves() {
+            moveSpheres.forEach(sphere => scene.remove(sphere));
+            moveSpheres.length = 0; // Очищаем массив
+        }
+
+        const loader = new FontLoader();
+        loader.load('https://threejs.org/examples/fonts/helvetiker_regular.typeface.json', function (font) {
+    
+            const textSize = 0.3;
+            const textHeight = 0.05;
+            const textMaterial = new THREE.MeshBasicMaterial({color: 0x333333});
+
+            // Letters
+            const letters = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
+            letters.forEach((number, i) => {
+                const textGeometry = new TextGeometry(number, {
+                    font: font,
+                    size: textSize,
+                    height: textHeight,
+                });
+                const textMesh = new THREE.Mesh(textGeometry, textMaterial);
+                textMesh.position.set(-4, -0.4, i - 3.75);
+                textMesh.rotation.y = Math.PI / -2;
+                scene.add(textMesh);
+
+                const textMesh2 = new THREE.Mesh(textGeometry, textMaterial);
+                textMesh2.position.set(4.05, -0.4, i - 3.75);
+                textMesh2.rotation.y = Math.PI / -2;
+                scene.add(textMesh2);
+            });
+
+            // Digits
+            const numbers = ['1', '2', '3', '4', '5', '6', '7', '8'];
+            numbers.forEach((letter, i) => {
+                const textGeometry = new TextGeometry(letter, {
+                    font: font,
+                    size: textSize,
+                    height: textHeight,
+                });
+                const textMesh = new THREE.Mesh(textGeometry, textMaterial);
+                textMesh.position.set(i - 3.75, -0.4, -4.05);
+                scene.add(textMesh);
+
+                const textMesh2 = new THREE.Mesh(textGeometry, textMaterial);
+                textMesh2.position.set(i - 3.75, -0.4, 4);
+                scene.add(textMesh2);
+            });
+        });
+
+        // Camera position
+        camera.position.x = -7;
+        camera.position.y = 7;
+        camera.position.z = -7;
+        camera.lookAt(scene.position);
+
+        // Resize on window size change
+        window.addEventListener('resize', onWindowResize, false);
+
+        function onWindowResize() {
+            // Обновление размеров камеры
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+
+            // Обновление размеров рендерера
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+        const light = new THREE.PointLight(0xFFFFFF, 70, 1000);
+        light.position.set(0, 5, 0);
+        scene.add(light);
+
+    </script>
+</body>
+</html>
