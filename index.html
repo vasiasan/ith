@@ -96,6 +96,7 @@
             board = null;
             figure = null;
             sphere = null;
+            states = [];
             constructor(color, size, x, z){
                 this.x = x;
                 this.z = z;
@@ -113,6 +114,18 @@
             removeSphere(){
                 this.model.remove(this.sphere);
                 this.sphere = null;
+            }
+
+            addFigure (mech){
+                this.figure = mech;
+                this.model.add(mech.modelFull);
+                mech.tile = this;
+            }
+
+            addState (state){
+                this.states = state;
+                this.model.add(state.model);
+                state.tile = this;
             }
         }
         class Board {
@@ -151,14 +164,6 @@
                     }
                 }
                 this.model = this.board;
-            }
-
-            add (object, x, z){
-                let tile = this.tiles[x][z];
-                tile.figure = object;
-                tile.model.add(object.modelFull);
-                object.board = this;
-                object.tile = tile;
             }
 
             isWithin (x,z){
@@ -323,10 +328,95 @@
             }
         }
 
+        //////////////////////////////////////////////////////////////////
+        //////////////////////////////////////////////////////////////////
+        //////////////////////////// STATUSES ////////////////////////////
+        //////////////////////////////////////////////////////////////////
+        //////////////////////////////////////////////////////////////////
+
+        // Cloud
+        class Cloud {
+            model = new THREE.Group();
+            cloudMaterial = new THREE.MeshBasicMaterial({
+                color: 0xffffff,
+                transparent: true,
+                opacity: 0.5
+            });
+
+            constructor(){
+                this.sphereCount = 50;
+                for (let i = 0; i < this.sphereCount; i++) {
+                    this.sphereGeometry = new THREE.SphereGeometry(Math.random() * 0.4 + 0.01, 16, 16);
+                    const sphere = new THREE.Mesh(this.sphereGeometry, this.cloudMaterial);
+                    sphere.position.set(
+                        Math.random() * 0.6 - 0.3,
+                        Math.random() * 0.6 - 0.3,
+                        Math.random() * 0.6 - 0.3
+                    );
+                    this.model.add(sphere);
+                }
+                this.model.position.y = 0.5;;
+            }
+        }
+
+        // Fire
+        class Fire {
+            model = new THREE.Group();
+            coneGeometry = new THREE.ConeGeometry(0.05, 0.28, 32);
+            yellowMaterial = new THREE.MeshToonMaterial({color: 0xFFFF00,transparent: true,opacity: 0.9});
+            redMaterial = new THREE.MeshToonMaterial({color: 0xFF0000,transparent: true,opacity: 0.9});
+            bottomGeometry = new THREE.SphereGeometry(0.12, 32);
+
+            constructor(){
+                const flame = new THREE.Group();
+                const cone1 = new THREE.Mesh(this.coneGeometry, this.yellowMaterial);
+                cone1.position.set( 0.048, 0.13,  0.048);
+                const cone2 = new THREE.Mesh(this.coneGeometry, this.yellowMaterial);
+                cone2.position.set(-0.048, 0.13,  0.048);
+                const cone3 = new THREE.Mesh(this.coneGeometry, this.yellowMaterial);
+                cone3.position.set( 0.048, 0.13, -0.048);
+                const cone4 = new THREE.Mesh(this.coneGeometry, this.yellowMaterial);
+                cone4.position.set(-0.048, 0.13, -0.048);
+                const cone5 = new THREE.Mesh(this.coneGeometry, this.redMaterial);
+                cone5.position.set(0, 0.25, 0);
+
+                const ball = new THREE.Mesh(this.bottomGeometry, this.redMaterial);
+
+                flame.add(cone1);
+                flame.add(cone2);
+                flame.add(cone3);
+                flame.add(cone4);
+                flame.add(cone5);
+                flame.add(ball);
+                flame.position.x = +0.4;
+                flame.position.z = -0.4;
+                flame.position.y = 0.2;
+
+
+                this.model.add(flame);
+
+                const flame1 = flame.clone() 
+                flame1.position.x = +0.4;
+                flame1.position.z = +0.4;
+                this.model.add(flame1);
+
+                const flame2 = flame.clone() 
+                flame2.position.x = -0.4;
+                flame2.position.z = +0.4;
+                this.model.add(flame2);
+
+                const flame3 = flame.clone() 
+                flame3.position.x = -0.4;
+                flame3.position.z = -0.4;
+                this.model.add(flame3);
+            }
+        }
+
         // create mech
-        const mech = new Mech()
-        board.add(mech, 0, 0);
-        board.add(new Mech(), 3, 3);
+        board.tiles[0][0].addFigure(new Mech());
+        board.tiles[3][3].addFigure(new Mech());
+        board.tiles[7][7].addState(new Cloud())
+        board.tiles[5][5].addState(new Fire())
 
         window.addEventListener('click', onDocumentMouseClick, false);
         function onDocumentMouseClick(event) {
@@ -364,82 +454,6 @@
         //         // water.position.y = 1;
 
         //         // statuses.add(water);
-
-        //         // Fire
-        //         const flame = new THREE.Group();
-        //         const coneGeometry = new THREE.ConeGeometry(0.05, 0.28, 32);
-        //         const yellowMaterial = new THREE.MeshToonMaterial({color: 0xFFFF00,transparent: true,opacity: 0.9});
-        //         const redMaterial = new THREE.MeshToonMaterial({color: 0xFF0000,transparent: true,opacity: 0.9});
-
-        //         const cone1 = new THREE.Mesh(coneGeometry, yellowMaterial);
-        //         cone1.position.set( 0.048, 0.13,  0.048);
-        //         const cone2 = new THREE.Mesh(coneGeometry, yellowMaterial);
-        //         cone2.position.set(-0.048, 0.13,  0.048);
-        //         const cone3 = new THREE.Mesh(coneGeometry, yellowMaterial);
-        //         cone3.position.set( 0.048, 0.13, -0.048);
-        //         const cone4 = new THREE.Mesh(coneGeometry, yellowMaterial);
-        //         cone4.position.set(-0.048, 0.13, -0.048);
-        //         const cone5 = new THREE.Mesh(coneGeometry, redMaterial);
-        //         cone5.position.set(0, 0.25, 0);
-
-        //         const bottomGeometry = new THREE.SphereGeometry(0.12, 32);
-        //         const ball = new THREE.Mesh(bottomGeometry, redMaterial);
-
-        //         flame.add(cone1);
-        //         flame.add(cone2);
-        //         flame.add(cone3);
-        //         flame.add(cone4);
-        //         flame.add(cone5);
-        //         flame.add(ball);
-        //         flame.position.x = xPos + 0.4;
-        //         flame.position.z = zPos - 0.4;
-        //         flame.position.y = 0.5;
-
-
-        //         statuses.add(flame);
-
-        //         const flame1 = flame.clone() 
-        //         flame1.position.x = xPos + 0.4;
-        //         flame1.position.z = zPos + 0.4;
-        //         statuses.add(flame1);
-
-        //         const flame2 = flame.clone() 
-        //         flame2.position.x = xPos - 0.4;
-        //         flame2.position.z = zPos + 0.4;
-        //         statuses.add(flame2);
-
-        //         const flame3 = flame.clone() 
-        //         flame3.position.x = xPos - 0.4;
-        //         flame3.position.z = zPos - 0.4;
-        //         statuses.add(flame3);
-
-        //         // Cloud
-        //         const cloudMaterial = new THREE.MeshBasicMaterial({
-        //             color: 0xffffff,
-        //             transparent: true,
-        //             opacity: 0.5
-        //         });
-
-        //         // Создаем группу для облака
-        //         const cloud = new THREE.Group();
-
-        //         // Создаем сферы и добавляем их в группу облака
-        //         const sphereCount = 50;
-        //         for (let i = 0; i < sphereCount; i++) {
-        //             const sphereGeometry = new THREE.SphereGeometry(Math.random() * 0.4 + 0.01, 16, 16);
-        //             const sphere = new THREE.Mesh(sphereGeometry, cloudMaterial);
-        //             sphere.position.set(
-        //                 Math.random() * 0.6 - 0.3,
-        //                 Math.random() * 0.6 - 0.3,
-        //                 Math.random() * 0.6 - 0.3
-        //             );
-        //             cloud.add(sphere);
-        //         }
-        //         cloud.position.x = xPos;
-        //         cloud.position.z = zPos;
-        //         cloud.position.y = 0.5;
-        //         statuses.add(cloud);
-
         //         return statuses;
         //     }
 
