@@ -110,6 +110,7 @@
             sphere = null;
             states = [];
             constructor(color, size, x, z){
+                this.model.tileInstance = this;
                 this.x = x;
                 this.z = z;
                 this.material = new THREE.MeshToonMaterial({color: color});
@@ -120,7 +121,7 @@
             }
             addMoveSphere(){
                 if ( this.sphere ) return;
-                this.sphere = new Sphere;
+                this.sphere = new Sphere();
                 this.model.add(this.sphere);
             }
             removeSphere(){
@@ -143,6 +144,7 @@
             addState (state){
                 this.states = state;
                 this.model.add(state.model);
+                state.model.tileInstance = this;
                 state.tile = this;
             }
         }
@@ -203,6 +205,16 @@
             move (figure, tile){
                 figure.tile.remFigure();
                 tile.addFigure(figure);
+            }
+            select(figure){
+                this.selected = figure;
+                figure.select();
+            }
+            deselect(){
+                if (this.selected){
+                    this.selected.deselect();
+                }
+                this.selected = null;
             }
 
             tilesWithMoveSphere = [];
@@ -318,11 +330,23 @@
             }
         }
 
+        // Selector for figure
+        class Selector {
+            selectorGeometry = new THREE.ConeGeometry(0.5, 1, 32);
+            selectorMaterial = new THREE.MeshBasicMaterial({color: 0x00FF00, transparent: true, opacity: 0.7});
+            constructor(){
+                this.model = new THREE.Mesh(this.selectorGeometry, this.selectorMaterial);
+
+                this.model.position.y = 2;
+                this.model.rotation.x = Math.PI; // Перевернуть конус, чтобы он указывал вниз
+            }
+        }
         // Figure's class
         class Figure {
             model = new THREE.Group();
             modelFull = new THREE.Group();
             tile = null;
+            selector = null;
 
             constructor (){
                 this.frame = new Frame();
@@ -338,25 +362,20 @@
                 this.model.add(this.tools.model);
                 this.model.add(this.chassis.model);
 
-                this.selectorGeometry = new THREE.ConeGeometry(0.5, 1, 32);
-                this.selectorMaterial = new THREE.MeshBasicMaterial({color: 0x00FF00, transparent: true, opacity: 0.7});
-                this.selector = new THREE.Mesh(this.selectorGeometry, this.selectorMaterial);
-
-                this.selector.position.y = 2;
-                this.selector.rotation.x = Math.PI; // Перевернуть конус, чтобы он указывал вниз
-                this.selector.visible = false; // По умолчанию конус невидим
-
-                // Created to show all UNCLICKABLE objects related to the figure
                 this.modelFull.add(this.model);
-                this.modelFull.add(this.selector);
             } 
 
             select(){
-                this.selector.visible = true;
+                // Created to show all UNCLICKABLE objects related to the figure
+                this.selector = new Selector();
+                this.modelFull.add(this.selector.model);
+
                 this.tile.board.possibleMoves(3, this.tile.x, this.tile.z);
             }
             deselect(){
-                this.selector.visible = false;
+                this.modelFull.remove(this.selector.model);
+                this.selector = null;
+
                 this.tile.board.clearPossibleMoves();
             }
         }
@@ -498,27 +517,94 @@
 
         board.move(board.tiles[3][3].figure, board.tiles[4][4]);
 
-        window.addEventListener('click', onDocumentMouseClick, false);
+
+        let mouseDownCoords = { x: 0, y: 0 };
+        document.addEventListener('mousedown', (event) => {
+            mouseDownCoords.x = event.clientX;
+            mouseDownCoords.y = event.clientY;
+        });
+        document.addEventListener('mouseup', onDocumentMouseClick, false);
+
         function onDocumentMouseClick(event) {
+            const deltaX = event.clientX - mouseDownCoords.x;
+            const deltaY = event.clientY - mouseDownCoords.y;
+            if (Math.abs(deltaX) > 2 || Math.abs(deltaY) > 2) {
+                return; // Прекратить обработку
+            }
+
             mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
             mouse.y = - (event.clientY / window.innerHeight) * 2 + 1;
             raycaster.setFromCamera(mouse, camera);
-
-            if (board.selected) {
-                board.selected.deselect();
-                board.selecter = null;
-            }
 
             // Находим пересечения со всеми моделями
             let intersects = raycaster.intersectObjects(scene.children, true);
 
             // Если есть пересечения, выбираем первое (ближайшее к камере)
-            if (intersects.length > 0 && intersects[0].object.parent.figureInstance) {
-                let figure = intersects[0].object.parent.figureInstance;
-                figure.select();
-                board.selected = figure;
+            if (intersects.length > 0){
+                const obj = intersects[0].object;
+                // Click on figure
+                if ( obj.parent.figureInstance ) {
+                    board.deselect();
+                    board.select(obj.parent.figureInstance);
+                // Click on tile with figure
+                } else if ( obj.parent.tileInstance && obj.parent.tileInstance.figure ) {
+                    board.deselect();
+                    board.select(obj.parent.tileInstance.figure);
+                // Click on tile with possible move
+                } else if (obj.parent.tileInstance && obj.parent.tileInstance.sphere) {
+                    board.move( board.selected, obj.parent.tileInstance );
+                    board.deselect();
+                // Click on other objects
+                } else if (board.selected) {
+                    board.deselect();
+                }
+            // Click on background
+            } else if (board.selected) {
+                board.deselect();
             }
+
+            // 
         }
+
+
+        // let hoveredObject = null;
+        // document.addEventListener('mousemove', onDocumentMouseMove);
+        // function onDocumentMouseMove(event) {
+        //     mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+        //     mouse.y = - (event.clientY / window.innerHeight) * 2 + 1;
+        //     raycaster.setFromCamera(mouse, camera);
+
+        //     // Находим пересечения со всеми моделями
+        //     let intersects = raycaster.intersectObjects(scene.children, true);
+
+        //     // Если есть пересечения
+        //     if (intersects.length > 0) {
+        //         // Если это новый объект (не тот, над которым был курсор ранее)
+        //         if (hoveredObject !== intersects[0].object) {
+        //             if (hoveredObject) {
+        //                 // Событие "mouseout" для предыдущего объекта
+        //                 onObjectMouseOut(hoveredObject);
+        //             }
+        //             hoveredObject = intersects[0].object;
+        //             // Событие "mouseover" для нового объекта
+        //             onObjectMouseOver(hoveredObject);
+        //         }
+        //     } else if (hoveredObject) {
+        //         // Событие "mouseout" для предыдущего объекта
+        //         onObjectMouseOut(hoveredObject);
+        //         hoveredObject = null;
+        //     }
+        // }
+
+        // function onObjectMouseOver(obj) {
+        //     // Действия при наведении курсора на объект
+        //     console.log("Mouse over:", obj);
+        // }
+
+        // function onObjectMouseOut(obj) {
+        //     // Действия при уходе курсора с объекта
+        //     console.log("Mouse out:", obj);
+        // }
 
         //////////////////////////////////////////////////////////////////
         //////////////////////////////////////////////////////////////////
