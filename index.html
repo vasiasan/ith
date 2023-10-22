@@ -143,9 +143,15 @@
 
             addState (state){
                 this.states = state;
-                this.model.add(state.model);
-                state.model.tileInstance = this;
-                state.tile = this;
+                if (state instanceof Water){
+                    this.material.color.set("#0000FF");
+                } else if (state instanceof Abyss){
+                    this.tile.visible = false;
+                } else {
+                    this.model.add(state.model);
+                    state.model.tileInstance = this;
+                    state.tile = this;
+                }
             }
         }
         class Board {
@@ -498,15 +504,10 @@
         }
         
         // WATER
-        class Water {
-            model = new THREE.Group();
-            waterGeometry = new THREE.BoxGeometry(1, 0.0001, 1);
-            waterMaterial = new THREE.MeshToonMaterial({color: 0x0000FF}); //,transparent: true,opacity: 0.9
-            constructor(){
-                this.model.add(new THREE.Mesh(this.waterGeometry, this.waterMaterial));
-                this.model.position.y = 0.0001;
-            }
-        }
+        class Water {}
+
+        // Abyss
+        class Abyss {}
 
         // create figures
         board.tiles[0][0].addFigure(new Figure());
@@ -514,6 +515,7 @@
         board.tiles[7][7].addState(new Cloud())
         board.tiles[5][5].addState(new Fire());
         board.tiles[3][3].addState(new Water());
+        board.tiles[3][5].addState(new Abyss());
 
         board.move(board.tiles[3][3].figure, board.tiles[4][4]);
 
