@@ -509,6 +509,38 @@
         // Abyss
         class Abyss {}
 
+        class Mount {
+            model = new THREE.Group();
+
+            constructor(){
+                // Создаем геометрию конуса
+                const radius = 0.707; // радиус основания конуса
+                const height = 1; // высота конуса
+                const segments = 4; // количество сегментов (для более плавного внешнего вида)
+
+                const geometry = new THREE.ConeGeometry(radius, height, segments);
+
+                // Создаем материалы для горы и снега
+                const mountainMaterial = new THREE.MeshStandardMaterial({ color: 0x886633 }); // коричневый для горы
+                const snowMaterial = new THREE.MeshStandardMaterial({ color: 0xFFFFFF }); // белый для снега
+
+                // Создаем основную часть горы
+                const mountainBase = new THREE.Mesh(geometry, mountainMaterial);
+                this.model.add(mountainBase);
+
+                // Добавляем заснеженную вершину. Мы будем использовать меньший конус и размещать его на вершине большого конуса.
+                const snowHeight = height * 0.4; // заснеженная часть составляет 20% от высоты горы
+                const snowCone = new THREE.Mesh(
+                    new THREE.ConeGeometry(radius * 0.4001, snowHeight, segments),
+                    snowMaterial
+                );
+                snowCone.position.y = (height - snowHeight) / 2; // позиционируем заснеженную вершину на верхней части большого конуса
+                this.model.add(snowCone);
+                this.model.rotateY(THREE.MathUtils.degToRad(45));
+                this.model.position.y = 0.5;
+            }
+        }
+
         // create figures
         board.tiles[0][0].addFigure(new Figure());
         board.tiles[3][3].addFigure(new Figure());
@@ -516,6 +548,7 @@
         board.tiles[5][5].addState(new Fire());
         board.tiles[3][3].addState(new Water());
         board.tiles[3][5].addState(new Abyss());
+        board.tiles[3][0].addState(new Mount());
 
         board.move(board.tiles[3][3].figure, board.tiles[4][4]);
 
