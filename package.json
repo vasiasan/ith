@@ -1,0 +1,25 @@
+{
+  "name": "ith",
+  "version": "1.0.0",
+  "description": "Into The Heroes",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/vasiasan/ith.git"
+  },
+  "author": "Vasilii Sannikov",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/vasiasan/ith/issues"
+  },
+  "homepage": "https://github.com/vasiasan/ith#readme",
+  "dependencies": {
+    "three": "^0.157.0"
+  },
+  "devDependencies": {
+    "vite": "^4.5.0"
+  }
+}
