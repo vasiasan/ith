@@ -32,13 +32,20 @@ animate();
 const stars = new Stars(10000, 1000);
 scene.add(stars.draw());
 
-const button = new Button(0.01, 0.01, 0.002, 0xAAAA00, 'XYZ');
+const button = new Button(0.01, 0.01, 0.002, 0xAAAA00, 'CAM');
 placeButtonNearEdge(button.model, camera, 0.01, 0.01, 0.1011);
 
 const camLight = new THREE.PointLight(0xFFFFFF, 0.1, 1000);
 camera.add(camLight);
 camera.add(button.model);
 scene.add(camera);
+
+button.click = () => {
+    camera.position.x = -7;
+    camera.position.y = 7;
+    camera.position.z = -7;
+    camera.lookAt(scene.position);
+};
 
 const board = new Board(8, 8);
 window.board = board;
