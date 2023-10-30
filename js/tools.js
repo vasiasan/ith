@@ -59,29 +59,22 @@ function clickListen (board, camera, scene){
     
         // Находим пересечения со всеми моделями
         let intersects = raycaster.intersectObjects(scene.children, true);
-    
-        // Если есть пересечения, выбираем первое (ближайшее к камере)
-        if (intersects.length > 0){
-            const obj = intersects[0].object;
-            // Click on figure
-            if ( obj.parent.figureInstance ) {
-                board.deselect();
-                board.select(obj.parent.figureInstance);
-            // Click on tile with figure
-            } else if ( obj.parent.tileInstance && obj.parent.tileInstance.figure ) {
-                board.deselect();
-                board.select(obj.parent.tileInstance.figure);
-            // Click on tile with possible move
-            } else if (obj.parent.tileInstance && obj.parent.tileInstance.sphere) {
-                board.move( board.selected, obj.parent.tileInstance );
-                board.deselect();
-            // Click on other objects
-            } else if (board.selected) {
-                board.deselect();
+
+        let clicked = null;
+        for (const intersection of intersects) {
+            // console.log(intersection);
+            const obj = intersection.object;
+            if (obj.clickTransparent) continue;
+            if (obj.parent.instance && obj.parent.instance.click) {
+                obj.parent.instance.click();
+                clicked = true;
+                break;
             }
-        // Click on background
-        } else if (board.selected) {
-            board.deselect();
+        }
+        if (!clicked){
+            if (board.selected) {
+                board.selected.deselect();
+            }
         }
     }
     

@@ -71,7 +71,7 @@ class Tile {
   sphere = null;
   states = [];
   constructor(color, size, x, z){
-      this.model.tileInstance = this;
+      this.model.instance = this;
       this.x = x;
       this.z = z;
       this.material = new THREE.MeshToonMaterial({color: color});
@@ -110,9 +110,18 @@ class Tile {
           this.tile.visible = false;
       } else {
           this.model.add(state.model);
-          state.model.tileInstance = this;
+          state.model.instance = this;
           state.tile = this;
       }
+  }
+
+  click(){
+    if (this.board.selected && this.sphere){
+      this.board.move(this.board.selected, this);
+      this.board.selected.deselect();
+    } else if (this.figure){
+      this.figure.click();
+    }
   }
 }
 class Board {
@@ -172,16 +181,6 @@ class Board {
   move (figure, tile){
       figure.tile.remFigure();
       tile.addFigure(figure);
-  }
-  select(figure){
-      this.selected = figure;
-      figure.select();
-  }
-  deselect(){
-      if (this.selected){
-          this.selected.deselect();
-      }
-      this.selected = null;
   }
 
   tilesWithMoveSphere = [];

@@ -85,6 +85,7 @@ class Selector {
   selectorMaterial = new THREE.MeshBasicMaterial({color: 0x00FF00, transparent: true, opacity: 0.7});
   constructor(){
       this.model = new THREE.Mesh(this.selectorGeometry, this.selectorMaterial);
+      this.model.clickTransparent = true;
 
       this.model.position.y = 2;
       this.model.rotation.x = Math.PI; // Перевернуть конус, чтобы он указывал вниз
@@ -99,20 +100,27 @@ class Figure {
 
   constructor (){
       this.frame = new Frame();
-      this.frame.model.figureInstance = this;       // Need to use in click intersections
+      this.frame.model.instance = this;       // Need to use in click intersections
 
       this.tools = new Tools();
-      this.tools.model.figureInstance = this;       // Need to use in click intersections
+      this.tools.model.instance = this;       // Need to use in click intersections
 
       this.chassis = new Chassis();
-      this.chassis.model.figureInstance = this;     // Need to use in click intersections
+      this.chassis.model.instance = this;     // Need to use in click intersections
 
       this.model.add(this.frame.model);
       this.model.add(this.tools.model);
       this.model.add(this.chassis.model);
 
       this.modelFull.add(this.model);
-  } 
+  }
+
+  click(){
+    if (this.tile.board.selected) {
+      this.tile.board.selected.deselect();
+    }
+    this.select();
+  }
 
   select(){
       // Created to show all UNCLICKABLE objects related to the figure
@@ -120,13 +128,17 @@ class Figure {
       this.modelFull.add(this.selector.model);
 
       this.tile.board.possibleMoves(3, this.tile.x, this.tile.z);
+
+      this.tile.board.selected = this;    
   }
   deselect(){
       this.modelFull.remove(this.selector.model);
       this.selector = null;
 
       this.tile.board.clearPossibleMoves();
-  }
+
+      this.tile.board.selected = null;
+    }
 }
 
 export {Figure}

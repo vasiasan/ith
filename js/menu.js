@@ -6,8 +6,13 @@ import font from 'three/examples/fonts/helvetiker_regular.typeface.json';
 
 class Button {
   model = new THREE.Group();
+  click(){
+    console.log(this);
+  }
+
   constructor(width, height, depth, color, text) {
 
+      this.model.instance = this;
       const geometry = new THREE.BoxGeometry(width, height, depth);
       const material = new THREE.MeshStandardMaterial({ color: color });
       this.mesh = new THREE.Mesh(geometry, material);

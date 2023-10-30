@@ -33,7 +33,7 @@ const stars = new Stars(10000, 1000);
 scene.add(stars.draw());
 
 const button = new Button(0.01, 0.01, 0.002, 0xAAAA00, 'XYZ');
-placeButtonNearEdge(button.model, camera, 0.01, 0.01, 0.12);
+placeButtonNearEdge(button.model, camera, 0.01, 0.01, 0.1011);
 
 const camLight = new THREE.PointLight(0xFFFFFF, 0.1, 1000);
 camera.add(camLight);
@@ -75,7 +75,7 @@ function onWindowResize() {
 
     // Обновление размеров рендерера
     renderer.setSize(window.innerWidth, window.innerHeight);
-    placeButtonNearEdge(button.model, camera, 0.01, 0.01, 0.12);
+    placeButtonNearEdge(button.model, camera, 0.01, 0.01, 0.1011);
 }
 const light = new THREE.PointLight(0xFFFFFF, 70, 1000);
 light.position.set(0, 5, 0);
