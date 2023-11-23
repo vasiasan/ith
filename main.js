@@ -51,17 +51,39 @@ const board = new Board(8, 8);
 window.board = board;
 scene.add(board.model);
 
+let player = {
+    "colors": [
+        0x0000FF,
+        0xFF0000
+    ]
+}
+
+let mechs = [
+    {
+        "frame": {
+            "name": "cube",
+            "modules": [true, false]
+        }
+    },
+    {
+        "frame": {
+            "name": "cube",
+            "modules": [true, false]
+        }
+    }
+]
 
 // create figures
-board.tiles[0][0].addFigure(new Figure());
-board.tiles[3][3].addFigure(new Figure());
+board.tiles[0][0].addFigure(new Figure(player, mechs[0]));
+board.tiles[2][2].addFigure(new Figure(player, mechs[0]));
+// board.tiles[3][3].addFigure(new Figure());
 board.tiles[7][7].addState(new Cloud())
 board.tiles[5][5].addState(new Fire());
 board.tiles[3][3].addState(new Water());
 board.tiles[3][5].addState(new Abyss());
 board.tiles[3][0].addState(new Mount());
 
-board.move(board.tiles[3][3].figure, board.tiles[4][4]);
+board.move(board.tiles[0][0].figure, board.tiles[4][4]);
 
 clickListen(board, camera, scene);
 

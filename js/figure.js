@@ -7,16 +7,33 @@
 import * as THREE from 'three';
 
 // Figure's frame class
-class Frame {
-  model = new THREE.Group();
-  cubeGeometry = new THREE.BoxGeometry(0.5, 0.5, 0.5);
-  cubeMaterial = new THREE.MeshStandardMaterial({color: 0x0000FF});
+frames = {
+  "cube": class Frame {
+    model = new THREE.Group();
+    cubeGeometry = new THREE.BoxGeometry(0.5, 0.5, 0.5);
+    modules = [
+      {
+        "enabled": false,
+        "reactors": 1,
+        "live": 2
+      },
+      {
+        "enabled": false,
+        "reactors": 1,
+        "live": 2
+      }
+    ]
 
-  constructor(){
-      this.cube = new THREE.Mesh(this.cubeGeometry, this.cubeMaterial);
-      this.cube.position.y = 0.5;
+    constructor(player, modules){
+        for (const mod in modules){
+          this.modules[mod].enable = modules[mod];
+        }
+        this.cubeMaterial = new THREE.MeshStandardMaterial({color: player.colors[0]});
+        this.cube = new THREE.Mesh(this.cubeGeometry, this.cubeMaterial);
+        this.cube.position.y = 0.5;
 
-      this.model.add(this.cube);
+        this.model.add(this.cube);
+    }
   }
 }
 
@@ -98,8 +115,8 @@ class Figure {
   tile = null;
   selector = null;
 
-  constructor (){
-      this.frame = new Frame();
+  constructor (player, mech){
+      this.frame = new frames["cube"](player, mech.frame.modules);
       this.frame.model.instance = this;       // Need to use in click intersections
 
       this.tools = new Tools();
