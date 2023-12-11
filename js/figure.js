@@ -5,30 +5,30 @@
 //////////////////////////////////////////////////////////////////
 
 import * as THREE from 'three';
+import { camera } from '/js/three.js';
+import { addHUD, remHUD } from '/js/menu.js';
+import { iconGenerator, materials as mat } from '/js/tools.js';
 
 // Figure's frame class
 frames = {
   "cube": class Frame {
     model = new THREE.Group();
     cubeGeometry = new THREE.BoxGeometry(0.5, 0.5, 0.5);
+
+    live = 2
     modules = [
       {
-        "enabled": false,
         "reactors": 1,
         "live": 2
       },
-      {
-        "enabled": false,
-        "reactors": 1,
-        "live": 2
-      }
     ]
 
-    constructor(player, modules){
+    constructor(colors, params){
+        let modules = params.modules;
         for (const mod in modules){
           this.modules[mod].enable = modules[mod];
         }
-        this.cubeMaterial = new THREE.MeshStandardMaterial({color: player.colors[0]});
+        this.cubeMaterial = new THREE.MeshStandardMaterial({color: colors[0]});
         this.cube = new THREE.Mesh(this.cubeGeometry, this.cubeMaterial);
         this.cube.position.y = 0.5;
 
@@ -37,64 +37,170 @@ frames = {
   }
 }
 
-// Figure's weapon class
-class Tools {
-  toolGeometry = new THREE.BoxGeometry(0.7, 0.2, 0.2);
-  toolMaterial = new THREE.MeshStandardMaterial({color: 0xFF0000});
+let tools = {
+  "cannon": class Cannon {
+    toolGeometry = new THREE.BoxGeometry(0.7, 0.2, 0.2);
 
-  tools = new THREE.Group();
-  toolLeft  = new THREE.Mesh(this.toolGeometry, this.toolMaterial);
-  toolRight = new THREE.Mesh(this.toolGeometry, this.toolMaterial);
+    damage = 1;
+    modules = [
+      {
+        "reactors": 1,
+        "damage": 1
+      },
+      {
+        "reactors": 2,
+        "damage": 2
+      }
+    ];
+    click = function () {console.log("CLICK")};
+    action = function () {
+      
+    };
+    
+    dots = [
+      { x: 1, y: 1, material: mat.green },
+      { x: 2, y: 1, material: mat.green },
+      { x: 3, y: 1, material: mat.green },
+      { x: 4, y: 1, material: mat.green },
+      { x: 5, y: 1, material: mat.green },
+      { x: 1, y: 2, material: mat.green },
+      { x: 2, y: 2, material: mat.green },
+      { x: 3, y: 2, material: mat.green },
+      { x: 4, y: 2, material: mat.green },
+      { x: 5, y: 2, material: mat.green },
+      { x: 6, y: 2, material: mat.green },
+      { x: 1, y: 3, material: mat.green },
+      { x: 2, y: 3, material: mat.green },
+      { x: 3, y: 3, material: mat.green },
+      { x: 4, y: 3, material: mat.green },
+      { x: 5, y: 3, material: mat.green },
+      { x: 6, y: 3, material: mat.green },
+      { x: 7, y: 3, material: mat.green },
+      { x: 1, y: 4, material: mat.green },
+      { x: 2, y: 4, material: mat.green },
+      { x: 3, y: 4, material: mat.green },
+      { x: 4, y: 4, material: mat.green },
+      { x: 5, y: 4, material: mat.green },
+      { x: 6, y: 4, material: mat.green },
+      { x: 7, y: 4, material: mat.green },
+      { x: 8, y: 4, material: mat.green },
+      { x: 1, y: 5, material: mat.green },
+      { x: 2, y: 5, material: mat.green },
+      { x: 3, y: 5, material: mat.green },
+      { x: 4, y: 5, material: mat.green },
+      { x: 5, y: 5, material: mat.green },
+      { x: 6, y: 5, material: mat.green },
+      { x: 7, y: 5, material: mat.green },
+      { x: 8, y: 5, material: mat.green },
+      { x: 2, y: 6, material: mat.green },
+      { x: 3, y: 6, material: mat.green },
+      { x: 4, y: 6, material: mat.green },
+      { x: 5, y: 6, material: mat.green },
+      { x: 6, y: 6, material: mat.green },
+      { x: 7, y: 6, material: mat.green },
+      { x: 8, y: 6, material: mat.green },
+      { x: 9, y: 6, material: mat.green },
+      { x: 3, y: 7, material: mat.green },
+      { x: 4, y: 7, material: mat.green },
+      { x: 5, y: 7, material: mat.green },
+      { x: 6, y: 7, material: mat.green },
+      { x: 7, y: 7, material: mat.green },
+      { x: 8, y: 7, material: mat.green },
+      { x: 9, y: 7, material: mat.green },
+      { x: 10, y: 7, material: mat.green },
+      { x: 4, y: 8, material: mat.green },
+      { x: 5, y: 8, material: mat.green },
+      { x: 6, y: 8, material: mat.green },
+      { x: 7, y: 8, material: mat.green },
+      { x: 8, y: 8, material: mat.green },
+      { x: 9, y: 8, material: mat.green },
+      { x: 10, y: 8, material: mat.green },
+      { x: 11, y: 8, material: mat.green },
+      { x: 6, y: 9, material: mat.green },
+      { x: 7, y: 9, material: mat.green },
+      { x: 8, y: 9, material: mat.green },
+      { x: 9, y: 9, material: mat.green },
+      { x: 7, y: 10, material: mat.green },
+      { x: 8, y: 10, material: mat.green },
+      { x: 8, y: 11, material: mat.green },
+    ];
+    
+  
+    constructor (colors, params){
+      this.icon = iconGenerator(0.01, this.dots);
+      this.icon.instance = this;
+      let modules = params.modules;
+      for (const mod in modules){
+        this.modules[mod].enable = modules[mod];
+      }
 
-  constructor (){
-      this.toolLeft.position.z = -0.35;
-      this.toolLeft.position.y = 0.6;
-
-      this.toolRight.position.z = 0.35;
-      this.toolRight.position.y = 0.6;
-
-      this.tools.add(this.toolLeft);
-      this.tools.add(this.toolRight);
-      this.model = this.tools
+      this.toolMaterial = new THREE.MeshStandardMaterial({color: colors[1]});
+      this.model = new THREE.Mesh(this.toolGeometry, this.toolMaterial);
+    };
   }
 }
 
-// Wheel class
-class Wheel {
-  material = new THREE.MeshStandardMaterial({color: 0xff00ff});
+// Figure's weapon class
+class Tools {
+  model = new THREE.Group();
+  constructor (color, params){
+    this.toolLeft  = new tools[params[0].name](color, params);
+    this.toolRight = new tools[params[1].name](color, params);
+    
+    this.toolLeft.model.position.z = -0.35;
+    this.toolRight.model.position.z = 0.35;
+      
+    this.toolLeft.model.position.y  = 0.6;
+    this.toolRight.model.position.y = 0.6;
 
-  constructor (size){
-      this.wheelGeometry = new THREE.CylinderGeometry(size, size, 0.3, 32);
-      this.wheel = new THREE.Mesh(this.wheelGeometry, this.material);
-      this.wheel.rotation.x = Math.PI / 2;
-      this.model = this.wheel;
+    this.model.add(this.toolLeft.model);
+    this.model.add(this.toolRight.model);
   }
 }
 
 // Chassis class
-class Chassis {
+let chassis = {
+  // Wheel class
+  "wheels": class Wheels {
 
-  wheelSize = 0.2;
-  cellShift = 0.3;
-  wheels = [];
+    speed = 3;
+    modules = [
+      {
+        "reactors": 1,
+        "speed": 1
+      },
+    ];
+    
+    wheelSize = 0.2;
+    cellShift = 0.3;
+    wheels = [];
 
-  chassis = new THREE.Group();
+    model = new THREE.Group();
 
-  constructor (){
-      
-      for (let i of [+1, -1]) {
-          for (let j of [+1, -1]) {
-              let wheel = new Wheel(this.wheelSize);
-              wheel.model.position.x = i * this.cellShift;
-              wheel.model.position.z = j * this.cellShift;
-              wheel.model.position.y = this.wheelSize;
-              this.wheels.push(wheel);
-              this.chassis.add(wheel.model);
+    constructor (colors, params){
+
+        class Wheel {
+          constructor (color, size){
+              this.material = new THREE.MeshStandardMaterial({color: color});
+              this.wheelGeometry = new THREE.CylinderGeometry(size, size, 0.3, 32);
+              this.model = new THREE.Mesh(this.wheelGeometry, this.material);
+              this.model.rotation.x = Math.PI / 2;
           }
-      }
-      this.model = this.chassis;
+        }
+  
+        for (let i of [+1, -1]) {
+            for (let j of [+1, -1]) {
+                let wheel = new Wheel(colors[1], this.wheelSize);
+                wheel.model.position.x = i * this.cellShift;
+                wheel.model.position.z = j * this.cellShift;
+                wheel.model.position.y = this.wheelSize;
+                this.wheels.push(wheel);
+                this.model.add(wheel.model);
+            }
+        }
+    }
   }
-}
+};
 
 // Selector for figure
 class Selector {
@@ -107,7 +213,8 @@ class Selector {
       this.model.position.y = 2;
       this.model.rotation.x = Math.PI; // Перевернуть конус, чтобы он указывал вниз
   }
-}
+};
+
 // Figure's class
 class Figure {
   model = new THREE.Group();
@@ -116,13 +223,13 @@ class Figure {
   selector = null;
 
   constructor (player, mech){
-      this.frame = new frames["cube"](player, mech.frame.modules);
+      this.frame = new frames[mech.frame.name](player.colors, mech.frame);
       this.frame.model.instance = this;       // Need to use in click intersections
 
-      this.tools = new Tools();
+      this.tools = new Tools(player.colors, mech.tools);
       this.tools.model.instance = this;       // Need to use in click intersections
 
-      this.chassis = new Chassis();
+      this.chassis = new chassis[mech.chassis.name](player.colors, mech.chassis);
       this.chassis.model.instance = this;     // Need to use in click intersections
 
       this.model.add(this.frame.model);
@@ -145,14 +252,20 @@ class Figure {
       this.modelFull.add(this.selector.model);
 
       this.tile.board.possibleMoves(3, this.tile.x, this.tile.z);
+      addHUD(this.tools.toolLeft.icon, camera, -0.01, -0.01);
+      addHUD(this.tools.toolRight.icon, camera, 0.01, -0.01);
+      // addHUD(this.tools.toolLeft.icon, camera, -0.1, -0.1);
+      // addHUD(this.tools.toolRight.icon, camera, 0.1, -0.1);
 
-      this.tile.board.selected = this;    
+      this.tile.board.selected = this;
   }
   deselect(){
       this.modelFull.remove(this.selector.model);
       this.selector = null;
 
       this.tile.board.clearPossibleMoves();
+      remHUD(this.tools.toolLeft.icon.uuid);
+      remHUD(this.tools.toolRight.icon.uuid);
 
       this.tile.board.selected = null;
     }

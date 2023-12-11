@@ -35,16 +35,44 @@ class Button {
   }
 }
 
-function placeButtonNearEdge(button, camera, offsetX, offsetY, distanceFromCamera) {
+const huds = {};
+
+function addHUD(group, camera, offsetX, offsetY) {
+  const box = new THREE.Box3();
+  box.setFromObject(group);
+  const size = new THREE.Vector3();
+  box.getSize(size);
+  const distanceFromCamera = 0.1 + size.z/2
+
   const aspectRatio = window.innerWidth / window.innerHeight;
   const vFov = camera.fov * Math.PI / 180;  // Преобразование в радианы
   const viewHeightAtDistance = 2 * Math.tan(vFov / 2) * distanceFromCamera;
   const viewWidthAtDistance = viewHeightAtDistance * aspectRatio;
 
   // Задаем позицию кнопки с учетом смещений
-  button.position.x = (viewWidthAtDistance / 2) - offsetX;
-  button.position.y = (viewHeightAtDistance / 2) - offsetY;
-  button.position.z = -distanceFromCamera;
+  // Для отрицательного смещения используем противоположную сторону экрана
+  group.position.x = offsetX >= 0 ? (viewWidthAtDistance / 2) - offsetX : -(viewWidthAtDistance / 2) - offsetX;
+  group.position.y = offsetY >= 0 ? (viewHeightAtDistance / 2) - offsetY : -(viewHeightAtDistance / 2) - offsetY;
+  group.position.z = -distanceFromCamera;
+  camera.add(group);
+  huds[group.uuid] = [group, camera, offsetX, offsetY];
 }
 
-export {Button, placeButtonNearEdge};
+function remHUD(uuid){
+  if (huds[uuid]){
+    const hud = huds[uuid];
+    const group  = hud[0];
+    const camera = hud[1];
+    camera.remove(group);
+    delete huds[uuid];
+  }
+}
+
+function renderHUD(){
+  for (const key in huds){
+    const hud = huds[key]
+    addHUD(hud[0], hud[1], hud[2], hud[3])
+  }
+}
+
+export {Button, addHUD, remHUD, renderHUD};
