@@ -5,34 +5,42 @@ import { TextGeometry } from 'three/examples/jsm/geometries/TextGeometry.js';
 import font from 'three/examples/fonts/helvetiker_regular.typeface.json';
 import { iconGenerator, materials as mat } from '/js/tools.js';
 
-class Button {
-  model = new THREE.Group();
-  click(){
-    console.log(this);
-  }
+class CameraReset {
+  constructor(camera, controls) {
+      this.click = () => {
+          camera.position.set(-7, 7, -7);
+    
+          controls.target.set(0, 0, 0);
+          controls.update();
+    
+          camera.zoom = 1;
+          camera.updateProjectionMatrix();
+      };
 
-  constructor(width, height, depth, color, text) {
+      const W0 = mat.white5;
+      const RF = mat.redF;
 
+      const dots = [
+        [  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ],
+        [  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ],
+        [  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ],
+        [  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ],
+        [  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ],
+        [  0, 0, 0,W0, 0, 0,RF,W0,W0,W0,W0,W0,W0, 0, ],
+        [  0, 0, 0,W0,W0, 0,W0,W0,W0,W0,W0,W0,W0, 0, ],
+        [  0, 0, 0,W0,W0,W0,W0,W0,W0,W0,W0,W0,W0, 0, ],
+        [  0, 0, 0,W0,W0,W0,W0,W0,W0,W0,W0,W0,W0, 0, ],
+        [  0, 0, 0,W0,W0,W0,W0,W0,W0,W0,W0,W0,W0, 0, ],
+        [  0, 0, 0,W0,W0, 0,W0,W0,W0,W0,W0,W0,W0, 0, ],
+        [  0, 0, 0,W0, 0, 0,W0,W0,W0,W0,W0,W0,W0, 0, ],
+        [  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ],
+        [  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ],
+        [  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ],
+        [  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ],
+      ];
+
+      this.model = iconGenerator(0.01, dots);
       this.model.instance = this;
-      const geometry = new THREE.BoxGeometry(width, height, depth);
-      const material = new THREE.MeshStandardMaterial({ color: color });
-      this.mesh = new THREE.Mesh(geometry, material);
-      
-      if (text) {
-        const loader = new FontLoader();
-        const threeFont = loader.parse(font);
-          const textGeometry = new TextGeometry(text, {
-              font: threeFont,
-              size: width * 0.2,
-              height: 0.0001,
-          });
-          const textMaterial = new THREE.MeshBasicMaterial({ color: 0x333333 });
-          const textMesh = new THREE.Mesh(textGeometry, textMaterial);
-          textMesh.position.set(-width / 3, -height / 5, depth / 2);
-          this.model.add(textMesh);
-      }
-
-      this.model.add(this.mesh);
   }
 }
 
@@ -72,4 +80,4 @@ function renderHUD(){
   }
 }
 
-export {Button, addHUD, remHUD, renderHUD};
+export {CameraReset, addHUD, remHUD, renderHUD};

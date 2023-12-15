@@ -4,23 +4,13 @@ import { scene, camera, controls } from '/js/three.js';
 import { Stars, clickListen } from '/js/tools.js';
 import { Mount, Water, Abyss, Cloud, Fire, Board } from '/js/board.js';
 import { Figure } from '/js/figure.js';
-import { Button, addHUD } from '/js/menu.js';
+import { CameraReset, addHUD } from '/js/menu.js';
 
 const stars = new Stars(10000, 1000);
 scene.add(stars.draw());
 
-const button = new Button(0.01, 0.01, 0.002, 0xAAAA00, 'CAM');
-addHUD(button.model, camera, 0.01, 0.01);
-
-button.click = () => {
-    camera.position.set(-7, 7, -7);
-
-    controls.target.set(0, 0, 0);
-    controls.update();
-
-    camera.zoom = 1;
-    camera.updateProjectionMatrix();
-};
+const cameraReset = new CameraReset(camera, controls);
+addHUD(cameraReset.model, camera, 0.01, 0.01);
 
 const board = new Board(8, 8);
 window.board = board;
