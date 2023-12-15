@@ -3,6 +3,7 @@ import * as THREE from 'three';
 import { FontLoader } from 'three/examples/jsm/loaders/FontLoader.js';
 import { TextGeometry } from 'three/examples/jsm/geometries/TextGeometry.js';
 import font from 'three/examples/fonts/helvetiker_regular.typeface.json';
+import { iconGenerator, materials as mat } from '/js/tools.js';
 
 class Button {
   model = new THREE.Group();
@@ -38,11 +39,7 @@ class Button {
 const huds = {};
 
 function addHUD(group, camera, offsetX, offsetY) {
-  const box = new THREE.Box3();
-  box.setFromObject(group);
-  const size = new THREE.Vector3();
-  box.getSize(size);
-  const distanceFromCamera = 0.1 + size.z/2
+  const distanceFromCamera = 0.1
 
   const aspectRatio = window.innerWidth / window.innerHeight;
   const vFov = camera.fov * Math.PI / 180;  // Преобразование в радианы

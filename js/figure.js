@@ -57,77 +57,32 @@ let tools = {
       
     };
     
-    dots = [
-      { x: 1, y: 1, material: mat.green },
-      { x: 2, y: 1, material: mat.green },
-      { x: 3, y: 1, material: mat.green },
-      { x: 4, y: 1, material: mat.green },
-      { x: 5, y: 1, material: mat.green },
-      { x: 1, y: 2, material: mat.green },
-      { x: 2, y: 2, material: mat.green },
-      { x: 3, y: 2, material: mat.green },
-      { x: 4, y: 2, material: mat.green },
-      { x: 5, y: 2, material: mat.green },
-      { x: 6, y: 2, material: mat.green },
-      { x: 1, y: 3, material: mat.green },
-      { x: 2, y: 3, material: mat.green },
-      { x: 3, y: 3, material: mat.green },
-      { x: 4, y: 3, material: mat.green },
-      { x: 5, y: 3, material: mat.green },
-      { x: 6, y: 3, material: mat.green },
-      { x: 7, y: 3, material: mat.green },
-      { x: 1, y: 4, material: mat.green },
-      { x: 2, y: 4, material: mat.green },
-      { x: 3, y: 4, material: mat.green },
-      { x: 4, y: 4, material: mat.green },
-      { x: 5, y: 4, material: mat.green },
-      { x: 6, y: 4, material: mat.green },
-      { x: 7, y: 4, material: mat.green },
-      { x: 8, y: 4, material: mat.green },
-      { x: 1, y: 5, material: mat.green },
-      { x: 2, y: 5, material: mat.green },
-      { x: 3, y: 5, material: mat.green },
-      { x: 4, y: 5, material: mat.green },
-      { x: 5, y: 5, material: mat.green },
-      { x: 6, y: 5, material: mat.green },
-      { x: 7, y: 5, material: mat.green },
-      { x: 8, y: 5, material: mat.green },
-      { x: 2, y: 6, material: mat.green },
-      { x: 3, y: 6, material: mat.green },
-      { x: 4, y: 6, material: mat.green },
-      { x: 5, y: 6, material: mat.green },
-      { x: 6, y: 6, material: mat.green },
-      { x: 7, y: 6, material: mat.green },
-      { x: 8, y: 6, material: mat.green },
-      { x: 9, y: 6, material: mat.green },
-      { x: 3, y: 7, material: mat.green },
-      { x: 4, y: 7, material: mat.green },
-      { x: 5, y: 7, material: mat.green },
-      { x: 6, y: 7, material: mat.green },
-      { x: 7, y: 7, material: mat.green },
-      { x: 8, y: 7, material: mat.green },
-      { x: 9, y: 7, material: mat.green },
-      { x: 10, y: 7, material: mat.green },
-      { x: 4, y: 8, material: mat.green },
-      { x: 5, y: 8, material: mat.green },
-      { x: 6, y: 8, material: mat.green },
-      { x: 7, y: 8, material: mat.green },
-      { x: 8, y: 8, material: mat.green },
-      { x: 9, y: 8, material: mat.green },
-      { x: 10, y: 8, material: mat.green },
-      { x: 11, y: 8, material: mat.green },
-      { x: 6, y: 9, material: mat.green },
-      { x: 7, y: 9, material: mat.green },
-      { x: 8, y: 9, material: mat.green },
-      { x: 9, y: 9, material: mat.green },
-      { x: 7, y: 10, material: mat.green },
-      { x: 8, y: 10, material: mat.green },
-      { x: 8, y: 11, material: mat.green },
-    ];
-    
-  
     constructor (colors, params){
-      this.icon = iconGenerator(0.01, this.dots);
+      const GD = mat.greenD;
+      const GF = mat.greenF;
+      const G7 = mat.green7;
+      const G5 = mat.green5;
+      const G3 = mat.green3;
+      const dots = [
+                      [  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ],
+                      [  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ],
+                      [  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ],
+                      [  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ],
+                      [  0, 0, 0, 0, 0, 0, 0, 0,GF, 0, 0, 0, 0, 0, ],
+                      [  0, 0, 0, 0, 0, 0, 0,GF,GD,GD, 0, 0, 0, 0, ],
+                      [  0, 0, 0, 0, 0, 0,GF,GD,GD,GD,G7, 0, 0, 0, ],
+                      [  0, 0, 0, 0, 0,GF,GD,GD,GD,G7,G5,G3, 0, 0, ],
+                      [  0, 0, 0, 0,GF,GD,GD,GD,G7,G5,G3, 0, 0, 0, ],
+                      [  0, 0,GF,GF,GD,GD,GD,G7,G5,G3, 0, 0, 0, 0, ],
+                      [  0,GF,GF,GD,GD,GD,G7,G5,G3, 0, 0, 0, 0, 0, ],
+                      [ GF,GF,GD,GD,GD,G7,G5,G3, 0, 0, 0, 0, 0, 0, ],
+                      [ GF,GD,GD,GD,G7,G5,G3, 0, 0, 0, 0, 0, 0, 0, ],
+                      [ GD,GD,GD,G7,G5,G3,G3, 0, 0, 0, 0, 0, 0, 0, ],
+                      [ GD,GD,G7,G5,G3,G3, 0, 0, 0, 0, 0, 0, 0, 0, ],
+                      [ GD,G7,G5,G3,G3, 0, 0, 0, 0, 0, 0, 0, 0, 0, ],
+                    ];
+  
+      this.icon = iconGenerator(0.01, dots);
       this.icon.instance = this;
       let modules = params.modules;
       for (const mod in modules){

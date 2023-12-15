@@ -89,34 +89,82 @@ const pixelation = (dots, mul) => {
     return model;
 }
 
-const drawIcon = (frame, dots, elem, mul) => {
-    const shift = 1/2*mul - elem/2;
+// const drawIcon = (frame, dots, size, mul) => {
+//     const shift = 1/2*mul - size/2;
     
-    for (const dot of dots){
-        const pixel = new THREE.Mesh(new THREE.BoxGeometry(elem, elem, elem), dot.material );
-        pixel.position.set(dot.x * elem - shift, dot.y * elem - shift, elem/2);
-        frame.add(pixel);
-    };
+//     for (const dot of dots){
+//         const pixel = new THREE.Mesh(new THREE.BoxGeometry(size, size, size), dot.material );
+//         pixel.position.set(dot.x * size - shift, dot.y * size - shift, size/2);
+//         frame.add(pixel);
+//     };
+//     return frame;
+// }
+
+const drawIcon = (frame, dots, size, mul) => {
+    const shift = 1/2*mul - size/2;
+    const xdots = dots.reverse();
+
+    for (let y in xdots) {
+        for (let x in xdots[y]) {
+            const material = xdots[y][x];
+            if (material) {
+                const pixel = new THREE.Mesh(new THREE.BoxGeometry(size, size, size), material);
+                pixel.position.set(x * size - shift, y * size - shift, -size/2);
+                frame.add(pixel);
+            }
+        }
+    }
     return frame;
-}
+};
 
 const materials = {
-    green: new THREE.MeshStandardMaterial({ color: "green" })
+    red1:       new THREE.MeshStandardMaterial({ color: 0x110000 }),
+    red2:       new THREE.MeshStandardMaterial({ color: 0x220000 }),
+    red3:       new THREE.MeshStandardMaterial({ color: 0x330000 }),
+    red4:       new THREE.MeshStandardMaterial({ color: 0x440000 }),
+    red5:       new THREE.MeshStandardMaterial({ color: 0x550000 }),
+    red6:       new THREE.MeshStandardMaterial({ color: 0x660000 }),
+    red7:       new THREE.MeshStandardMaterial({ color: 0x770000 }),
+    red8:       new THREE.MeshStandardMaterial({ color: 0x880000 }),
+    red9:       new THREE.MeshStandardMaterial({ color: 0x990000 }),
+    redF:       new THREE.MeshStandardMaterial({ color: 0xAA0000 }),
+    redF:       new THREE.MeshStandardMaterial({ color: 0xBB0000 }),
+    redF:       new THREE.MeshStandardMaterial({ color: 0xCC0000 }),
+    redF:       new THREE.MeshStandardMaterial({ color: 0xDD0000 }),
+    redF:       new THREE.MeshStandardMaterial({ color: 0xEE0000 }),
+    redF:       new THREE.MeshStandardMaterial({ color: 0xFF0000 }),
+
+    green1:     new THREE.MeshStandardMaterial({ color: 0x001100 }),
+    green2:     new THREE.MeshStandardMaterial({ color: 0x002200 }),
+    green3:     new THREE.MeshStandardMaterial({ color: 0x003300 }),
+    green4:     new THREE.MeshStandardMaterial({ color: 0x004400 }),
+    green5:     new THREE.MeshStandardMaterial({ color: 0x005500 }),
+    green6:     new THREE.MeshStandardMaterial({ color: 0x006600 }),
+    green7:     new THREE.MeshStandardMaterial({ color: 0x007700 }),
+    green8:     new THREE.MeshStandardMaterial({ color: 0x008800 }),
+    green9:     new THREE.MeshStandardMaterial({ color: 0x009900 }),
+    greenA:     new THREE.MeshStandardMaterial({ color: 0x00AA00 }),
+    greenB:     new THREE.MeshStandardMaterial({ color: 0x00BB00 }),
+    greenC:     new THREE.MeshStandardMaterial({ color: 0x00CC00 }),
+    greenD:     new THREE.MeshStandardMaterial({ color: 0x00DD00 }),
+    greenE:     new THREE.MeshStandardMaterial({ color: 0x00EE00 }),
+    greenF:     new THREE.MeshStandardMaterial({ color: 0x00FF00 }),
 }
 
 // Multiplier to make figure smaller or bigger
 function iconGenerator (mul, dots) {
     const elem = 1/16
+    const hel  = elem/2
 
     const canvasMaterial    = new THREE.MeshStandardMaterial({ color: 0xFFFFFF });        
     const frameMaterial     = new THREE.MeshStandardMaterial({ color: 0x777777 });
 
     const frame = [
-        { w: 1,    h: 1,    d: elem, x: 0,          y: 0,          z: -elem/2,material: canvasMaterial}, // background
-        { w: elem, h: 1,    d: elem, x: 0,          y: 1/2-elem/2, z: elem/2, material: frameMaterial }, // frame
-        { w: elem, h: 1,    d: elem, x: 0,          y: -1/2+elem/2,z: elem/2, material: frameMaterial }, // frame
-        { w: 1,    h: elem, d: elem, x: 1/2-elem/2, y: 0,          z: elem/2, material: frameMaterial }, // frame
-        { w: 1,    h: elem, d: elem, x: -1/2+elem/2,y: 0,          z: elem/2, material: frameMaterial }, // frame
+        { w: 1,    h: 1,    d: elem, x: 0,          y: 0,       z: -hel-elem,material: canvasMaterial}, // background
+        { w: elem, h: 1,    d: elem, x: 0,          y: 1/2-hel, z: -hel,     material: frameMaterial }, // frame
+        { w: elem, h: 1,    d: elem, x: 0,          y: -1/2+hel,z: -hel,     material: frameMaterial }, // frame
+        { w: 1,    h: elem, d: elem, x: 1/2-hel, y: 0,          z: -hel,     material: frameMaterial }, // frame
+        { w: 1,    h: elem, d: elem, x: -1/2+hel,y: 0,          z: -hel,     material: frameMaterial }, // frame
     ];
 
     return drawIcon( pixelation(frame, mul), dots, elem*mul, mul);
