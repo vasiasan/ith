@@ -69,6 +69,7 @@ class Tile {
   board = null;
   figure = null;
   sphere = null;
+  shotPreview = null;
   states = [];
   constructor(color, size, x, z){
       this.model.instance = this;
@@ -80,9 +81,9 @@ class Tile {
       this.tile.position.y = -(size * 0.6 / 2);
       this.model.add(this.tile);
   }
-  addMoveSphere(){
+  addSphere(type){
       if ( this.sphere ) return;
-      this.sphere = new Sphere();
+      this.sphere = new Sphere(type);
       this.model.add(this.sphere);
   }
   removeSphere(){
@@ -103,7 +104,7 @@ class Tile {
   }
 
   addState (state){
-      this.states = state;
+      this.states.push(state);
       if (state instanceof Water){
           this.material.color.set("#0000FF");
       } else if (state instanceof Abyss){
@@ -114,8 +115,14 @@ class Tile {
           state.tile = this;
       }
   }
+  obstacle(){
+    return this.figure || (this.states.filter((e) => e instanceof Mount )).length ? true : false ;
+  }
 
   click(){
+    if (this.shotPreview){
+
+    }
     if (this.board.selected && this.sphere){
       this.board.move(this.board.selected, this);
       this.board.selected.deselect();
@@ -195,11 +202,11 @@ class Board {
 
       if (steps >= 1){
           for ( let [dx, dz] of directions ){
-              if ( this.isWithin(dx,dz) && ! this.tiles[dx][dz].figure ) {
+              if ( this.isWithin(dx,dz) && ! this.tiles[dx][dz].obstacle() ) {
 
                   let tile = this.tiles[dx][dz];
-                  if ( !tile.sphere && !tile.figure ){
-                      let sphere = tile.addMoveSphere();
+                  if ( !tile.sphere && !tile.obstacle() ){
+                      let sphere = tile.addSphere("move");
                       this.tilesWithMoveSphere.push(tile);
                   }
                   this.possibleMoves(steps -1, dx, dz);
@@ -215,8 +222,9 @@ class Board {
 };
 
 class Sphere {
-  constructor(){
-      this.material = new THREE.MeshBasicMaterial({ color: 0xFF9900, transparent: true, opacity: 0.8 });
+  constructor(type){
+      const colors = {move: 0xFF9900, shot: 0xFF0000}
+      this.material = new THREE.MeshBasicMaterial({ color: colors[type], transparent: true, opacity: 0.8 });
       this.geometry = new THREE.SphereGeometry(0.1, 16, 16); // Радиус 0.1, сегменты: 16
 
       this.sphere = new THREE.Mesh(this.geometry, this.material);

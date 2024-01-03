@@ -89,17 +89,6 @@ const pixelation = (dots, mul) => {
     return model;
 }
 
-// const drawIcon = (frame, dots, size, mul) => {
-//     const shift = 1/2*mul - size/2;
-    
-//     for (const dot of dots){
-//         const pixel = new THREE.Mesh(new THREE.BoxGeometry(size, size, size), dot.material );
-//         pixel.position.set(dot.x * size - shift, dot.y * size - shift, size/2);
-//         frame.add(pixel);
-//     };
-//     return frame;
-// }
-
 const drawIcon = (frame, dots, size, mul) => {
     const shift = 1/2*mul - size/2;
     const xdots = dots.reverse();
@@ -109,7 +98,7 @@ const drawIcon = (frame, dots, size, mul) => {
             const material = xdots[y][x];
             if (material) {
                 const pixel = new THREE.Mesh(new THREE.BoxGeometry(size, size, size), material);
-                pixel.position.set(x * size - shift, y * size - shift, -size/2);
+                pixel.position.set(( parseInt(x)+1 ) * size - shift, ( parseInt(y)+1 ) * size - shift, -size/2);
                 frame.add(pixel);
             }
         }
@@ -203,6 +192,85 @@ function iconGenerator (mul, dots) {
     return drawIcon( pixelation(frame, mul), dots, elem*mul, mul);
 }
 
+const cancelIcon = (mul) => {
+    const RF = materials.redF;
+    const dots = [
+                    [ RF,RF, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,RF,RF, ],
+                    [ RF,RF,RF, 0, 0, 0, 0, 0, 0, 0, 0,RF,RF,RF, ],
+                    [  0,RF,RF,RF, 0, 0, 0, 0, 0, 0,RF,RF,RF, 0, ],
+                    [  0, 0,RF,RF,RF, 0, 0, 0, 0,RF,RF,RF, 0, 0, ],
+                    [  0, 0, 0,RF,RF,RF, 0, 0,RF,RF,RF, 0, 0, 0, ],
+                    [  0, 0, 0, 0,RF,RF,RF,RF,RF,RF, 0, 0, 0, 0, ],
+                    [  0, 0, 0, 0, 0,RF,RF,RF,RF, 0, 0, 0, 0, 0, ],
+                    [  0, 0, 0, 0, 0,RF,RF,RF,RF, 0, 0, 0, 0, 0, ],
+                    [  0, 0, 0, 0,RF,RF,RF,RF,RF,RF, 0, 0, 0, 0, ],
+                    [  0, 0, 0,RF,RF,RF, 0, 0,RF,RF,RF, 0, 0, 0, ],
+                    [  0, 0,RF,RF,RF, 0, 0, 0, 0,RF,RF,RF, 0, 0, ],
+                    [ 0 ,RF,RF,RF, 0, 0, 0, 0, 0, 0,RF,RF,RF, 0, ],
+                    [ RF,RF,RF, 0, 0, 0, 0, 0, 0, 0, 0,RF,RF,RF, ],
+                    [ RF,RF, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,RF,RF, ],
+                ];
+    return iconGenerator (mul, dots);
+}
+
+function calculateShotPath(startTile, endTile, maxDistance) {
+    const path = [];
+    let currentTile = startTile;
+    path.push(currentTile);
+  
+    // Вычисляем направление и шаги
+    const dx = endTile.x - startTile.x;
+    const dz = endTile.z - startTile.z;
+    const steps = Math.max(Math.abs(dx), Math.abs(dz));
+  
+    // Нормализуем шаги
+    const stepX = dx / steps;
+    const stepZ = dz / steps;
+  
+    // Определяем направление
+    let direction = '';
+    let dir = {};
+    
+    if      (dx > 0) dir.x = 'S';
+    else if (dx < 0) dir.x = 'N';
+    
+    if      (dz > 0) dir.z = 'E';
+    else if (dz < 0) dir.z = 'W';
+
+    if      ( Math.abs(dx) === Math.abs(dz) ) direction = `${dir.x}${dir.z}`;
+    else if ( Math.abs(dx)  >  Math.abs(dz) ) direction = dir.x;
+    else                                      direction = dir.z
+  
+    console.log(startTile.x, startTile.z, endTile.x, endTile.z, dx, dz, direction);
+    for (let i = 1; i <= steps; i++) {
+      // Если достигли максимального расстояния выстрела
+      if (i > maxDistance) {
+        return { finalTile: currentTile, path: path, direction: direction };
+      }
+  
+      // Вычисляем следующую клетку
+      const nextX = startTile.x + Math.round(stepX * i);
+      const nextZ = startTile.z + Math.round(stepZ * i);
+      const nextTile = board.tiles[nextX][nextZ];
+  
+      // Проверяем, есть ли препятствие
+      if (nextTile.obstacle()) {
+        return { finalTile: nextTile, path: path, direction: direction };
+      }
+  
+      path.push(nextTile);
+      currentTile = nextTile;
+  
+      // Если достигли конечной клетки
+      if (currentTile === endTile) {
+        return { finalTile: endTile, path: path, direction: direction };
+      }
+    }
+  
+    // Возвращаем последнюю клетку и путь, если конечная клетка не была достигнута
+    return { finalTile: currentTile, path: path, direction: direction };
+  }
+    
 // let hoveredObject = null;
 // document.addEventListener('mousemove', onDocumentMouseMove);
 // function onDocumentMouseMove(event) {
@@ -242,4 +310,4 @@ function iconGenerator (mul, dots) {
 //     console.log("Mouse out:", obj);
 // }
 
-export { Stars, clickListen, iconGenerator, materials };
+export { Stars, clickListen, iconGenerator, materials, cancelIcon, calculateShotPath };

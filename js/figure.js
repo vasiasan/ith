@@ -7,7 +7,7 @@
 import * as THREE from 'three';
 import { camera } from '/js/three.js';
 import { addHUD, remHUD } from '/js/menu.js';
-import { iconGenerator, materials as mat } from '/js/tools.js';
+import { iconGenerator, materials as mat, cancelIcon, calculateShotPath } from '/js/tools.js';
 
 // Figure's frame class
 frames = {
@@ -52,8 +52,48 @@ let tools = {
         "damage": 2
       }
     ];
-    click = function () {console.log("CLICK")};
-    action = function () {
+    cancelIcon = cancelIcon(0.01);
+
+    fireCalc = function(){
+      let tiles = this.figure.tile.board.tiles;
+      for (let x in tiles){
+        for (let z in tiles[x]){
+          const tile = tiles[x][z];
+          if ( this.figure.tile === tile ){
+            continue;
+          }
+          const shot = calculateShotPath( this.figure.tile, {x: x, z: z}, 8);
+
+          // console.log(shot.finalTile.x, shot.finalTile.z, shot.direction);
+          if (shot.finalTile === tile){
+            tile.addSphere("shot");
+            // for ( let point of shot.path ){
+            //   point.shotPreview = // FUNCTION TO SHOW SHOT PATH
+            // }
+          }
+
+          
+        }
+      }
+    };
+
+    // Show close icon
+    click = function () {
+      remHUD(this.icon.uuid);
+      addHUD(this.cancelIcon, camera, this.iconX, this.iconY);
+      this.figure.tile.board.clearPossibleMoves();
+      this.fireCalc();
+    };
+    showHUD = function (x, y) {
+      this.iconX = x;
+      this.iconY = y;
+      addHUD(this.icon, camera, x, y);
+    }
+    hideHUD = function () {
+      remHUD(this.icon.uuid);
+      remHUD(this.cancelIcon.uuid);
+    }
+    action = function (show) {
       
     };
     
@@ -64,8 +104,6 @@ let tools = {
       const G5 = mat.green5;
       const G3 = mat.green3;
       const dots = [
-                      [  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ],
-                      [  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ],
                       [  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ],
                       [  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ],
                       [  0, 0, 0, 0, 0, 0, 0, 0,GF, 0, 0, 0, 0, 0, ],
@@ -98,10 +136,22 @@ let tools = {
 // Figure's weapon class
 class Tools {
   model = new THREE.Group();
-  constructor (color, params){
+  constructor (figure, color, params){
     this.toolLeft  = new tools[params[0].name](color, params);
     this.toolRight = new tools[params[1].name](color, params);
     
+    this.showHUD = function () {
+      params[0] ? this.toolLeft.showHUD(-0.01, -0.01) :null ;
+      params[1] ? this.toolRight.showHUD(0.01, -0.01) :null ;
+    }
+    this.hideHUD = function () {
+      params[0] ? this.toolLeft.hideHUD()  :null ;
+      params[1] ? this.toolRight.hideHUD() :null ;
+    }
+  
+    this.toolLeft.figure  = figure;
+    this.toolRight.figure = figure;
+
     this.toolLeft.model.position.z = -0.35;
     this.toolRight.model.position.z = 0.35;
       
@@ -181,7 +231,7 @@ class Figure {
       this.frame = new frames[mech.frame.name](player.colors, mech.frame);
       this.frame.model.instance = this;       // Need to use in click intersections
 
-      this.tools = new Tools(player.colors, mech.tools);
+      this.tools = new Tools(this, player.colors, mech.tools);
       this.tools.model.instance = this;       // Need to use in click intersections
 
       this.chassis = new chassis[mech.chassis.name](player.colors, mech.chassis);
@@ -206,11 +256,8 @@ class Figure {
       this.selector = new Selector();
       this.modelFull.add(this.selector.model);
 
-      this.tile.board.possibleMoves(3, this.tile.x, this.tile.z);
-      addHUD(this.tools.toolLeft.icon, camera, -0.01, -0.01);
-      addHUD(this.tools.toolRight.icon, camera, 0.01, -0.01);
-      // addHUD(this.tools.toolLeft.icon, camera, -0.1, -0.1);
-      // addHUD(this.tools.toolRight.icon, camera, 0.1, -0.1);
+      this.tile.board.possibleMoves(this.chassis.speed, this.tile.x, this.tile.z);
+      this.tools.showHUD();
 
       this.tile.board.selected = this;
   }
@@ -219,8 +266,7 @@ class Figure {
       this.selector = null;
 
       this.tile.board.clearPossibleMoves();
-      remHUD(this.tools.toolLeft.icon.uuid);
-      remHUD(this.tools.toolRight.icon.uuid);
+      this.tools.hideHUD();
 
       this.tile.board.selected = null;
     }
