@@ -70,24 +70,31 @@ let tools = {
             // for ( let point of shot.path ){
             //   point.shotPreview = // FUNCTION TO SHOW SHOT PATH
             // }
-          }
-
-          
+          }          
         }
       }
     };
 
+    cancelAiming () {
+      this.figure.deselect();
+      this.figure.select();
+      this.click = this.aiming;
+    };
+
     // Show close icon
-    click = function () {
+    aiming () {
       remHUD(this.icon.uuid);
       addHUD(this.cancelIcon, camera, this.iconX, this.iconY);
-      this.figure.tile.board.clearPossibleMoves();
+      this.figure.tile.board.clearPossibleSpheres();
       this.fireCalc();
+      this.click = this.cancelAiming
     };
+
     showHUD = function (x, y) {
       this.iconX = x;
       this.iconY = y;
       addHUD(this.icon, camera, x, y);
+      this.click = this.aiming;
     }
     hideHUD = function () {
       remHUD(this.icon.uuid);
@@ -122,6 +129,7 @@ let tools = {
   
       this.icon = iconGenerator(0.01, dots);
       this.icon.instance = this;
+      this.cancelIcon.instance = this;
       let modules = params.modules;
       for (const mod in modules){
         this.modules[mod].enable = modules[mod];
@@ -265,7 +273,7 @@ class Figure {
       this.modelFull.remove(this.selector.model);
       this.selector = null;
 
-      this.tile.board.clearPossibleMoves();
+      this.tile.board.clearPossibleSpheres();
       this.tools.hideHUD();
 
       this.tile.board.selected = null;

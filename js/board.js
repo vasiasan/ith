@@ -115,8 +115,12 @@ class Tile {
           state.tile = this;
       }
   }
-  obstacle(){
+  unshootable(){
     return this.figure || (this.states.filter((e) => e instanceof Mount )).length ? true : false ;
+  }
+
+  impassable() {
+    return this.figure || this.states.some(e => e instanceof Mount || e instanceof Abyss);
   }
 
   click(){
@@ -190,7 +194,19 @@ class Board {
       tile.addFigure(figure);
   }
 
-  tilesWithMoveSphere = [];
+  tilesWithSphere (){
+    let tiles = this.tiles;
+    const spheres = []
+    for (let x in tiles){
+      for (let z in tiles[x]){
+        const tile = tiles[x][z];
+        if ( tile.sphere ) {
+            spheres.push(tile);
+        };
+      }
+    }
+    return spheres;
+  };
 
   possibleMoves (steps, x, z){
       let directions = [
@@ -202,12 +218,11 @@ class Board {
 
       if (steps >= 1){
           for ( let [dx, dz] of directions ){
-              if ( this.isWithin(dx,dz) && ! this.tiles[dx][dz].obstacle() ) {
+              if ( this.isWithin(dx,dz) && ! this.tiles[dx][dz].impassable() ) {
 
                   let tile = this.tiles[dx][dz];
-                  if ( !tile.sphere && !tile.obstacle() ){
+                  if ( !tile.sphere && !tile.impassable() ){
                       let sphere = tile.addSphere("move");
-                      this.tilesWithMoveSphere.push(tile);
                   }
                   this.possibleMoves(steps -1, dx, dz);
               }
@@ -215,9 +230,8 @@ class Board {
       }
   }
 
-  clearPossibleMoves() {
-      this.tilesWithMoveSphere.forEach(tile => tile.removeSphere());
-      this.tilesWithMoveSphere.length = 0; // Очищаем массив
+  clearPossibleSpheres() {
+      this.tilesWithSphere().forEach(tile => tile.removeSphere());
   }
 };
 

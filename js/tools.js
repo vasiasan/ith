@@ -241,7 +241,7 @@ function calculateShotPath(startTile, endTile, maxDistance) {
     else if ( Math.abs(dx)  >  Math.abs(dz) ) direction = dir.x;
     else                                      direction = dir.z
   
-    console.log(startTile.x, startTile.z, endTile.x, endTile.z, dx, dz, direction);
+    // console.log(startTile.x, startTile.z, endTile.x, endTile.z, dx, dz, direction);
     for (let i = 1; i <= steps; i++) {
       // Если достигли максимального расстояния выстрела
       if (i > maxDistance) {
@@ -254,7 +254,7 @@ function calculateShotPath(startTile, endTile, maxDistance) {
       const nextTile = board.tiles[nextX][nextZ];
   
       // Проверяем, есть ли препятствие
-      if (nextTile.obstacle()) {
+      if (nextTile.unshootable()) {
         return { finalTile: nextTile, path: path, direction: direction };
       }
   
