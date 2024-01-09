@@ -59,7 +59,7 @@ board.tiles[7][7].addState(new Cloud())
 board.tiles[5][5].addState(new Fire());
 board.tiles[3][3].addState(new Water());
 board.tiles[3][5].addState(new Abyss());
-board.tiles[3][0].addState(new Mount());
+board.tiles[0][1].addState(new Mount());
 
 board.move(board.tiles[0][0].figure, board.tiles[4][4]);
 

@@ -213,64 +213,65 @@ const cancelIcon = (mul) => {
     return iconGenerator (mul, dots);
 }
 
-function calculateShotPath(startTile, endTile, maxDistance) {
-    const path = [];
-    let currentTile = startTile;
-    path.push(currentTile);
-  
-    // Вычисляем направление и шаги
-    const dx = endTile.x - startTile.x;
-    const dz = endTile.z - startTile.z;
-    const steps = Math.max(Math.abs(dx), Math.abs(dz));
-  
-    // Нормализуем шаги
-    const stepX = dx / steps;
-    const stepZ = dz / steps;
-  
-    // Определяем направление
-    let direction = '';
-    let dir = {};
-    
-    if      (dx > 0) dir.x = 'S';
-    else if (dx < 0) dir.x = 'N';
-    
-    if      (dz > 0) dir.z = 'E';
-    else if (dz < 0) dir.z = 'W';
+// Begin End
+function direction (b, e) {
+    let dx = Math.abs(e.x - b.x);
+    let dz = Math.abs(e.z - b.z);
 
-    if      ( Math.abs(dx) === Math.abs(dz) ) direction = `${dir.x}${dir.z}`;
-    else if ( Math.abs(dx)  >  Math.abs(dz) ) direction = dir.x;
-    else                                      direction = dir.z
-  
-    // console.log(startTile.x, startTile.z, endTile.x, endTile.z, dx, dz, direction);
-    for (let i = 1; i <= steps; i++) {
-      // Если достигли максимального расстояния выстрела
-      if (i > maxDistance) {
-        return { finalTile: currentTile, path: path, direction: direction };
-      }
-  
-      // Вычисляем следующую клетку
-      const nextX = startTile.x + Math.round(stepX * i);
-      const nextZ = startTile.z + Math.round(stepZ * i);
-      const nextTile = board.tiles[nextX][nextZ];
-  
-      // Проверяем, есть ли препятствие
-      if (nextTile.unshootable()) {
-        return { finalTile: nextTile, path: path, direction: direction };
-      }
-  
-      path.push(nextTile);
-      currentTile = nextTile;
-  
-      // Если достигли конечной клетки
-      if (currentTile === endTile) {
-        return { finalTile: endTile, path: path, direction: direction };
-      }
+    // Determine the direction of the line
+    let dirX = Math.sign(e.x - b.x);
+    let dirZ = Math.sign(e.z - b.z);
+
+    let dir = [];
+    if      ( dx > dz )
+        dir = [ dirX, 0    ];
+    else if ( dx < dz )
+        dir = [ 0,    dirZ ];
+    else
+        dir = [ dirX, dirZ ];
+    return dir;
+}
+
+function calculateShotPath(A, B, tiles) {
+
+    const mul = 3;
+    // Функция для определения клеток, пересекаемых линией (алгоритм Брезенхема)
+    function getLine(x0, z0, x1, z1) {
+        let tilesOnLine = [];
+        let dx = Math.abs(x1 - x0);
+        let dz = Math.abs(z1 - z0);
+        let sx = (x0 < x1) ? 1 : -1;
+        let sz = (z0 < z1) ? 1 : -1;
+        let err = dx - dz;
+
+        while (!(x0 === x1 && z0 === z1)) {
+            let tileX = Math.floor(x0 / mul);
+            let tileZ = Math.floor(z0 / mul);
+            let tile = tiles[tileX][tileZ];
+
+            if (!tilesOnLine.includes(tile)) 
+                tilesOnLine.push(tile);
+            if (tile != A && tile.unshootable()) break;
+
+            let e2 = 2 * err;
+            if (e2 >= -dz) { err -= dz; x0 += sx; }
+            if (e2 <=  dx) { err += dx; z0 += sz; }
+        }
+        return tilesOnLine;
     }
-  
-    // Возвращаем последнюю клетку и путь, если конечная клетка не была достигнута
-    return { finalTile: currentTile, path: path, direction: direction };
-  }
-    
+
+    // Вычисляем центр клетки A
+    let axCenter = A.x * mul + 1;
+    let azCenter = A.z * mul + 1;
+    let bxCenter = B.x * mul + 1;
+    let bzCenter = B.z * mul + 1;
+
+    // Определяем клетки для каждой линии
+    let path = getLine(axCenter, azCenter, bxCenter, bzCenter);
+
+    return path;
+}
+          
 // let hoveredObject = null;
 // document.addEventListener('mousemove', onDocumentMouseMove);
 // function onDocumentMouseMove(event) {
@@ -310,4 +311,4 @@ function calculateShotPath(startTile, endTile, maxDistance) {
 //     console.log("Mouse out:", obj);
 // }
 
-export { Stars, clickListen, iconGenerator, materials, cancelIcon, calculateShotPath };
+export { Stars, clickListen, iconGenerator, materials, cancelIcon, calculateShotPath, direction };

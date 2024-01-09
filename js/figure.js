@@ -62,11 +62,16 @@ let tools = {
           if ( this.figure.tile === tile ){
             continue;
           }
-          const shot = calculateShotPath( this.figure.tile, {x: x, z: z}, 8);
+          const shot = calculateShotPath( this.figure.tile, {x: +x, z: +z}, tiles); // +z +x mean convert to int
 
-          // console.log(shot.finalTile.x, shot.finalTile.z, shot.direction);
-          if (shot.finalTile === tile){
+          console.log(x,z, shot.map(a => a.x + ":" + a.z))
+          if (shot.at(-1) === tile){
             tile.addSphere("shot");
+            tile.click = function(){
+              for(let tile of shot){
+                tile.addShotPath();
+              }
+            }
             // for ( let point of shot.path ){
             //   point.shotPreview = // FUNCTION TO SHOW SHOT PATH
             // }
@@ -85,7 +90,7 @@ let tools = {
     aiming () {
       remHUD(this.icon.uuid);
       addHUD(this.cancelIcon, camera, this.iconX, this.iconY);
-      this.figure.tile.board.clearPossibleSpheres();
+      this.figure.tile.board.clearPossibleMarks();
       this.fireCalc();
       this.click = this.cancelAiming
     };
@@ -273,7 +278,7 @@ class Figure {
       this.modelFull.remove(this.selector.model);
       this.selector = null;
 
-      this.tile.board.clearPossibleSpheres();
+      this.tile.board.clearPossibleMarks();
       this.tools.hideHUD();
 
       this.tile.board.selected = null;

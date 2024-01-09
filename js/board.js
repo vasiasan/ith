@@ -69,6 +69,7 @@ class Tile {
   board = null;
   figure = null;
   sphere = null;
+  shotPath = null;
   shotPreview = null;
   states = [];
   constructor(color, size, x, z){
@@ -89,6 +90,16 @@ class Tile {
   removeSphere(){
       this.model.remove(this.sphere);
       this.sphere = null;
+  }
+
+  addShotPath(){
+    if ( this.shotPath ) return;
+    this.shotPath = new ShotPath();
+    this.model.add(this.shotPath);
+  }
+  removeShotPath(){
+    this.model.remove(this.shotPath);
+    this.shotPath = null;
   }
 
   addFigure (figure){
@@ -208,6 +219,20 @@ class Board {
     return spheres;
   };
 
+  tilesWithMarks (){
+    let tiles = this.tiles;
+    const marks = []
+    for (let x in tiles){
+      for (let z in tiles[x]){
+        const tile = tiles[x][z];
+        if ( tile.shotPath ) {
+            marks.push(tile);
+        };
+      }
+    }
+    return marks;
+  };
+
   possibleMoves (steps, x, z){
       let directions = [
           [ x +1, z   ],
@@ -230,8 +255,9 @@ class Board {
       }
   }
 
-  clearPossibleSpheres() {
+  clearPossibleMarks() {
       this.tilesWithSphere().forEach(tile => tile.removeSphere());
+      this.tilesWithMarks().forEach(tile => tile.removeShotPath());
   }
 };
 
@@ -248,6 +274,18 @@ class Sphere {
   }
 }
 
+class ShotPath {
+    constructor(){
+        this.material = new THREE.MeshBasicMaterial({ color: 0x00FFFF, transparent: true, opacity: 0.4 });
+        this.geometry = new THREE.BoxGeometry(1, 1, 1);
+  
+        this.sphere = new THREE.Mesh(this.geometry, this.material);
+        this.sphere.position.y = 0.5;
+  
+        return this.sphere;
+    }
+  }
+  
 //////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////
 //////////////////////////// STATUSES ////////////////////////////
