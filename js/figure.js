@@ -66,15 +66,13 @@ let tools = {
 
           console.log(x,z, shot.map(a => a.x + ":" + a.z))
           if (shot.at(-1) === tile){
-            tile.addSphere("shot");
+            tile.addMark("shot");
             tile.click = function(){
               for(let tile of shot){
-                tile.addShotPath();
+                tile.removeMark();
+                tile.addMark("shotPath");
               }
             }
-            // for ( let point of shot.path ){
-            //   point.shotPreview = // FUNCTION TO SHOW SHOT PATH
-            // }
           }          
         }
       }

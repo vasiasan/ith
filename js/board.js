@@ -68,9 +68,7 @@ class Tile {
   model = new THREE.Group();
   board = null;
   figure = null;
-  sphere = null;
-  shotPath = null;
-  shotPreview = null;
+  mark = null;
   states = [];
   constructor(color, size, x, z){
       this.model.instance = this;
@@ -82,24 +80,14 @@ class Tile {
       this.tile.position.y = -(size * 0.6 / 2);
       this.model.add(this.tile);
   }
-  addSphere(type){
-      if ( this.sphere ) return;
-      this.sphere = new Sphere(type);
-      this.model.add(this.sphere);
+  addMark(type){
+      if ( this.mark ) return;
+      this.mark = new Mark(type);
+      this.model.add(this.mark);
   }
-  removeSphere(){
-      this.model.remove(this.sphere);
-      this.sphere = null;
-  }
-
-  addShotPath(){
-    if ( this.shotPath ) return;
-    this.shotPath = new ShotPath();
-    this.model.add(this.shotPath);
-  }
-  removeShotPath(){
-    this.model.remove(this.shotPath);
-    this.shotPath = null;
+  removeMark(){
+      this.model.remove(this.mark);
+      this.mark = null;
   }
 
   addFigure (figure){
@@ -135,10 +123,7 @@ class Tile {
   }
 
   click(){
-    if (this.shotPreview){
-
-    }
-    if (this.board.selected && this.sphere){
+    if (this.board.selected && this.mark.type === "move"){
       this.board.move(this.board.selected, this);
       this.board.selected.deselect();
     } else if (this.figure){
@@ -205,27 +190,13 @@ class Board {
       tile.addFigure(figure);
   }
 
-  tilesWithSphere (){
-    let tiles = this.tiles;
-    const spheres = []
-    for (let x in tiles){
-      for (let z in tiles[x]){
-        const tile = tiles[x][z];
-        if ( tile.sphere ) {
-            spheres.push(tile);
-        };
-      }
-    }
-    return spheres;
-  };
-
-  tilesWithMarks (){
+  tilesWithMark (){
     let tiles = this.tiles;
     const marks = []
     for (let x in tiles){
       for (let z in tiles[x]){
         const tile = tiles[x][z];
-        if ( tile.shotPath ) {
+        if ( tile.mark ) {
             marks.push(tile);
         };
       }
@@ -246,8 +217,8 @@ class Board {
               if ( this.isWithin(dx,dz) && ! this.tiles[dx][dz].impassable() ) {
 
                   let tile = this.tiles[dx][dz];
-                  if ( !tile.sphere && !tile.impassable() ){
-                      let sphere = tile.addSphere("move");
+                  if ( !tile.mark && !tile.impassable() ){
+                      let mark = tile.addMark("move");
                   }
                   this.possibleMoves(steps -1, dx, dz);
               }
@@ -256,36 +227,42 @@ class Board {
   }
 
   clearPossibleMarks() {
-      this.tilesWithSphere().forEach(tile => tile.removeSphere());
-      this.tilesWithMarks().forEach(tile => tile.removeShotPath());
+      this.tilesWithMark().forEach(tile => tile.removeMark());
   }
 };
 
-class Sphere {
+class Mark {
   constructor(type){
-      const colors = {move: 0xFF9900, shot: 0xFF0000}
-      this.material = new THREE.MeshBasicMaterial({ color: colors[type], transparent: true, opacity: 0.8 });
-      this.geometry = new THREE.SphereGeometry(0.1, 16, 16); // Радиус 0.1, сегменты: 16
+      const types = {
+                        move: {
+                            color: 0xFF9900,
+                            radius: 0.1,
+                            height: 0.1
+                        },
+                        shot: {
+                            color: 0xFF0000,
+                            radius: 0.1,
+                            height: 0.3
+                        },
+                        shotPath: {
+                            color: 0xFF0000,
+                            radius: 0.3,
+                            height: 0.3
+                        }
+                    };
+      const mark = types[type];
+      this.material = new THREE.MeshBasicMaterial({ color: mark.color, transparent: true, opacity: 0.8 });
+      const radius = {move: 0.1, shot: 0.1, shotPath: 0.3}
+      this.geometry = new THREE.SphereGeometry(mark.radius, 16, 16); // Радиус 0.1, сегменты: 16
 
-      this.sphere = new THREE.Mesh(this.geometry, this.material);
-      this.sphere.position.y = 0.1; // y = 0.2, чтобы сфера была над доской
+      this.mark = new THREE.Mesh(this.geometry, this.material);
+      this.mark.position.y = mark.height; // y = 0.2, чтобы сфера была над доской
+      this.mark.type = type;
 
-      return this.sphere;
+      return this.mark;
   }
 }
 
-class ShotPath {
-    constructor(){
-        this.material = new THREE.MeshBasicMaterial({ color: 0x00FFFF, transparent: true, opacity: 0.4 });
-        this.geometry = new THREE.BoxGeometry(1, 1, 1);
-  
-        this.sphere = new THREE.Mesh(this.geometry, this.material);
-        this.sphere.position.y = 0.5;
-  
-        return this.sphere;
-    }
-  }
-  
 //////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////
 //////////////////////////// STATUSES ////////////////////////////
@@ -302,16 +279,16 @@ class Cloud {
   });
 
   constructor(){
-      this.sphereCount = 50;
-      for (let i = 0; i < this.sphereCount; i++) {
+      this.markCount = 50;
+      for (let i = 0; i < this.markCount; i++) {
           this.sphereGeometry = new THREE.SphereGeometry(Math.random() * 0.4 + 0.01, 16, 16);
-          const sphere = new THREE.Mesh(this.sphereGeometry, this.cloudMaterial);
-          sphere.position.set(
+          const mark = new THREE.Mesh(this.sphereGeometry, this.cloudMaterial);
+          mark.position.set(
               Math.random() * 0.6 - 0.3,
               Math.random() * 0.6 - 0.3,
               Math.random() * 0.6 - 0.3
           );
-          this.model.add(sphere);
+          this.model.add(mark);
       }
       this.model.position.y = 0.5;;
   }
