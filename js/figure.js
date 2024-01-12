@@ -39,8 +39,6 @@ frames = {
 
 let tools = {
   "cannon": class Cannon {
-    toolGeometry = new THREE.BoxGeometry(0.7, 0.2, 0.2);
-
     damage = 1;
     modules = [
       {
@@ -52,7 +50,49 @@ let tools = {
         "damage": 2
       }
     ];
-    cancelIcon = cancelIcon(0.01);
+
+    drawShotPath = function (shot) {
+      let shotAim = () => {
+        for(let tile of shot.slice(1)){
+          tile.removeMark();
+
+          let mark;
+          if (shot.at(-1).unshootable())
+            shot.at(-1) === tile ?
+              mark = new Mark("shotShow") :
+              mark = new Mark("shotAimPath");
+          else
+            mark = new Mark("shotFakePath");
+          tile.addMark(mark);
+
+          mark.action = () => {
+            console.log("SHOW SHOT", this);
+          }
+        }
+      }
+
+      let tile = shot.at(-1);
+      if (tile.unshootable()){
+        let mark;
+          mark = new Mark("shotEnd");
+          tile.addMark(mark);
+
+          mark.action = () => {
+            this.figure.tile.board.clearMarks();
+            this.actCalc();
+            shotAim(shot);
+          };
+      } else {
+          let mark = new Mark("shotPath")
+          tile.addMark(mark);
+
+          mark.action = () => {
+            this.figure.tile.board.clearMarks();
+            this.actCalc();
+            shotAim(shot);
+          };
+      }
+    }
 
     actCalc = function(){
       let tiles = this.figure.tile.board.tiles;
@@ -66,30 +106,8 @@ let tools = {
 
           // console.log(x,z, shot.map(a => a.x + ":" + a.z))
           if (shot.at(-1) === tile){
-
-            let mark = new Mark("shot")
-            mark.action = () => {
-              this.figure.tile.board.clearMarks();
-              this.actCalc();
-              for(let tile of shot.slice(1)){
-                tile.removeMark();
-                if (tile === shot.at(-1) && tile.unshootable()){
-                  let shotEnd = new Mark("shotEnd");
-                  shotEnd.action = () => {
-                    console.log(this);
-                  }
-                  tile.addMark(shotEnd);  
-                } else {
-                  let shotPath = new Mark("shotPath");
-                  shotPath.action = () => {
-                    console.log(this);
-                  }
-                  tile.addMark(shotPath);  
-                }
-              }
-            };
-            tile.addMark(mark);
-          }          
+            this.drawShotPath(shot);
+          }
         }
       }
     };
@@ -119,8 +137,9 @@ let tools = {
       remHUD(this.icon.uuid);
       remHUD(this.cancelIcon.uuid);
     }
-    
-    constructor (colors, params){
+
+    cancelIcon = cancelIcon(0.01);
+    drawIcon = function (){
       const GD = mat.greenD;
       const GF = mat.greenF;
       const G7 = mat.green7;
@@ -143,16 +162,22 @@ let tools = {
                       [ GD,G7,G5,G3,G3, 0, 0, 0, 0, 0, 0, 0, 0, 0, ],
                     ];
   
-      this.icon = iconGenerator(0.01, dots);
+      this.icon = iconGenerator(0.01, dots);  
       this.icon.instance = this;
       this.cancelIcon.instance = this;
+    }
+    
+    constructor (colors, params){
+      let toolGeometry = new THREE.BoxGeometry(0.7, 0.2, 0.2);
+      let toolMaterial = new THREE.MeshStandardMaterial({color: colors[1]});
+
+      this.drawIcon();
       let modules = params.modules;
       for (const mod in modules){
         this.modules[mod].enable = modules[mod];
       }
 
-      this.toolMaterial = new THREE.MeshStandardMaterial({color: colors[1]});
-      this.model = new THREE.Mesh(this.toolGeometry, this.toolMaterial);
+      this.model = new THREE.Mesh(toolGeometry, toolMaterial);
     };
   }
 }
@@ -192,7 +217,7 @@ let chassis = {
   // Wheel class
   "wheels": class Wheels {
 
-    speed = 10;
+    speed = 8;
     modules = [
       {
         "reactors": 1,
@@ -334,29 +359,45 @@ class Mark {
       const types = {
                         move: {
                             color: 0xFF9900,
-                            radius: 0.1,
-                            height: 0.1
-                        },
-                        shot: {
-                            color: 0xFF0000,
-                            radius: 0.1,
-                            height: 0.3
+                            side: 0.1,
+                            height: 0.05,
+                            opacity: 0.8
                         },
                         shotPath: {
                             color: 0xFF0000,
-                            radius: 0.3,
-                            height: 0.3
+                            side: 0.1,
+                            height: 0.5,
+                            opacity: 0.5
+                        },
+                        shotFakePath: {
+                            color: 0xFF0000,
+                            side: 0.3,
+                            height: 0.5,
+                            opacity: 0.5
+                        },
+                        shotAimPath: {
+                            color: 0xFF0000,
+                            side: 0.3,
+                            height: 0.5,
+                            opacity: 0.8
                         },
                         shotEnd: {
                             color: 0xFF0000,
-                            radius: 0.5,
-                            height: 0.5
-                        }
-                    };
+                            side: 1,
+                            height: 0.5,
+                            opacity: 0.5
+                        },
+                        shotShow: {
+                          color: 0xFF00FF,
+                          side: 1,
+                          height: 0.5,
+                          opacity: 0.5
+                      }
+                  };
       const mark = types[type];
-      this.material = new THREE.MeshBasicMaterial({ color: mark.color, transparent: true, opacity: 0.8 });
+      this.material = new THREE.MeshBasicMaterial({ color: mark.color, transparent: true, opacity: mark.opacity });
       const radius = {move: 0.1, shot: 0.1, shotPath: 0.3}
-      this.geometry = new THREE.SphereGeometry(mark.radius, 16, 16); // Радиус 0.1, сегменты: 16
+      this.geometry = new THREE.BoxGeometry(mark.side, mark.side, mark.side);
 
       this.mark = new THREE.Mesh(this.geometry, this.material);
       this.mark.position.y = mark.height; // y = 0.2, чтобы сфера была над доской
