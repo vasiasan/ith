@@ -80,9 +80,9 @@ class Tile {
       this.tile.position.y = -(size * 0.6 / 2);
       this.model.add(this.tile);
   }
-  addMark(type){
+  addMark(mark){
       if ( this.mark ) return;
-      this.mark = new Mark(type);
+      this.mark = mark;
       this.model.add(this.mark);
   }
   removeMark(){
@@ -123,11 +123,12 @@ class Tile {
   }
 
   click(){
-    if (this.board.selected && this.mark.type === "move"){
-      this.board.move(this.board.selected, this);
-      this.board.selected.deselect();
+    if (this.mark) {
+        this.mark.action();
     } else if (this.figure){
-      this.figure.click();
+        this.figure.click();
+    } else if (this.board.selected) {
+        this.board.selected.deselect();
     }
   }
 }
@@ -185,11 +186,6 @@ class Board {
       return models;
   }
 
-  move (figure, tile){
-      figure.tile.remFigure();
-      tile.addFigure(figure);
-  }
-
   tilesWithMark (){
     let tiles = this.tiles;
     const marks = []
@@ -204,64 +200,10 @@ class Board {
     return marks;
   };
 
-  possibleMoves (steps, x, z){
-      let directions = [
-          [ x +1, z   ],
-          [ x -1, z   ],
-          [ x   , z +1],
-          [ x   , z -1]
-      ];
-
-      if (steps >= 1){
-          for ( let [dx, dz] of directions ){
-              if ( this.isWithin(dx,dz) && ! this.tiles[dx][dz].impassable() ) {
-
-                  let tile = this.tiles[dx][dz];
-                  if ( !tile.mark && !tile.impassable() ){
-                      let mark = tile.addMark("move");
-                  }
-                  this.possibleMoves(steps -1, dx, dz);
-              }
-          }
-      }
-  }
-
-  clearPossibleMarks() {
-      this.tilesWithMark().forEach(tile => tile.removeMark());
-  }
+  clearMarks() {
+    this.tilesWithMark().forEach(tile => tile.removeMark());
+  };
 };
-
-class Mark {
-  constructor(type){
-      const types = {
-                        move: {
-                            color: 0xFF9900,
-                            radius: 0.1,
-                            height: 0.1
-                        },
-                        shot: {
-                            color: 0xFF0000,
-                            radius: 0.1,
-                            height: 0.3
-                        },
-                        shotPath: {
-                            color: 0xFF0000,
-                            radius: 0.3,
-                            height: 0.3
-                        }
-                    };
-      const mark = types[type];
-      this.material = new THREE.MeshBasicMaterial({ color: mark.color, transparent: true, opacity: 0.8 });
-      const radius = {move: 0.1, shot: 0.1, shotPath: 0.3}
-      this.geometry = new THREE.SphereGeometry(mark.radius, 16, 16); // Радиус 0.1, сегменты: 16
-
-      this.mark = new THREE.Mesh(this.geometry, this.material);
-      this.mark.position.y = mark.height; // y = 0.2, чтобы сфера была над доской
-      this.mark.type = type;
-
-      return this.mark;
-  }
-}
 
 //////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////

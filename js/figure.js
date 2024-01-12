@@ -66,13 +66,17 @@ let tools = {
 
           console.log(x,z, shot.map(a => a.x + ":" + a.z))
           if (shot.at(-1) === tile){
-            tile.addMark("shot");
-            tile.click = function(){
+
+            let mark = new Mark("shot")
+            mark.action = () => {
+              this.figure.tile.board.clearMarks();
+              this.fireCalc();
               for(let tile of shot){
                 tile.removeMark();
-                tile.addMark("shotPath");
+                tile.addMark(new Mark("shotPath"));
               }
-            }
+            };
+            tile.addMark(mark);
           }          
         }
       }
@@ -88,7 +92,7 @@ let tools = {
     aiming () {
       remHUD(this.icon.uuid);
       addHUD(this.cancelIcon, camera, this.iconX, this.iconY);
-      this.figure.tile.board.clearPossibleMarks();
+      this.figure.tile.board.clearMarks();
       this.fireCalc();
       this.click = this.cancelAiming
     };
@@ -179,7 +183,7 @@ let chassis = {
   // Wheel class
   "wheels": class Wheels {
 
-    speed = 3;
+    speed = 10;
     modules = [
       {
         "reactors": 1,
@@ -262,12 +266,45 @@ class Figure {
     this.select();
   }
 
+  possibleMoves (steps, x, z){
+      let directions = [
+          [ x +1, z   ],
+          [ x -1, z   ],
+          [ x   , z +1],
+          [ x   , z -1]
+      ];
+
+      let tiles = this.tile.board.tiles;
+      if (steps >= 1){
+          for ( let [dx, dz] of directions ){
+              if ( this.tile.board.isWithin(dx,dz) && ! tiles[dx][dz].impassable() ) {
+
+                  let tile = tiles[dx][dz];
+                  if ( !tile.mark && !tile.impassable() ){
+                      let mark = new Mark("move")
+                      mark.action = () => {
+                                          this.move(tile);
+                                          this.tile.board.selected.deselect()
+                                        };
+                      tile.addMark(mark);
+                  }
+                  this.possibleMoves(steps -1, dx, dz);
+              }
+          }
+      }
+  }
+
+  move (tile){
+    this.tile.remFigure();
+    tile.addFigure(this);
+  }
+
   select(){
       // Created to show all UNCLICKABLE objects related to the figure
       this.selector = new Selector();
       this.modelFull.add(this.selector.model);
 
-      this.tile.board.possibleMoves(this.chassis.speed, this.tile.x, this.tile.z);
+      this.possibleMoves(this.chassis.speed, this.tile.x, this.tile.z);
       this.tools.showHUD();
 
       this.tile.board.selected = this;
@@ -276,11 +313,43 @@ class Figure {
       this.modelFull.remove(this.selector.model);
       this.selector = null;
 
-      this.tile.board.clearPossibleMarks();
+      this.tile.board.clearMarks();
       this.tools.hideHUD();
 
       this.tile.board.selected = null;
     }
+}
+
+class Mark {
+  constructor(type){
+      const types = {
+                        move: {
+                            color: 0xFF9900,
+                            radius: 0.1,
+                            height: 0.1
+                        },
+                        shot: {
+                            color: 0xFF0000,
+                            radius: 0.1,
+                            height: 0.3
+                        },
+                        shotPath: {
+                            color: 0xFF0000,
+                            radius: 0.3,
+                            height: 0.3
+                        }
+                    };
+      const mark = types[type];
+      this.material = new THREE.MeshBasicMaterial({ color: mark.color, transparent: true, opacity: 0.8 });
+      const radius = {move: 0.1, shot: 0.1, shotPath: 0.3}
+      this.geometry = new THREE.SphereGeometry(mark.radius, 16, 16); // Радиус 0.1, сегменты: 16
+
+      this.mark = new THREE.Mesh(this.geometry, this.material);
+      this.mark.position.y = mark.height; // y = 0.2, чтобы сфера была над доской
+      this.mark.type = type;
+
+      return this.mark;
+  }
 }
 
 export {Figure}

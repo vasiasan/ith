@@ -234,7 +234,7 @@ function direction (b, e) {
 
 function calculateShotPath(A, B, tiles) {
 
-    const mul = 3;
+    const mul = 3; // It should be an odd number
     // Функция для определения клеток, пересекаемых линией (алгоритм Брезенхема)
     function getLine(x0, z0, x1, z1) {
         let tilesOnLine = [];
@@ -261,10 +261,10 @@ function calculateShotPath(A, B, tiles) {
     }
 
     // Вычисляем центр клетки A
-    let axCenter = A.x * mul + 1;
-    let azCenter = A.z * mul + 1;
-    let bxCenter = B.x * mul + 1;
-    let bzCenter = B.z * mul + 1;
+    let axCenter = A.x * mul + Math.floor(mul/2);
+    let azCenter = A.z * mul + Math.floor(mul/2);
+    let bxCenter = B.x * mul + Math.floor(mul/2);
+    let bzCenter = B.z * mul + Math.floor(mul/2);
 
     // Определяем клетки для каждой линии
     let path = getLine(axCenter, azCenter, bxCenter, bzCenter);

@@ -61,7 +61,7 @@ board.tiles[3][3].addState(new Water());
 board.tiles[3][5].addState(new Abyss());
 board.tiles[0][1].addState(new Mount());
 
-board.move(board.tiles[0][0].figure, board.tiles[4][4]);
+board.tiles[0][0].figure.move(board.tiles[4][4]);
 
 clickListen(board, camera, scene);
 
