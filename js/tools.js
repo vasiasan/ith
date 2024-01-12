@@ -234,7 +234,7 @@ function direction (b, e) {
 
 function calculateShotPath(A, B, tiles) {
 
-    const mul = 3; // It should be an odd number
+    const mul = 7; // It should be an odd number
     // Функция для определения клеток, пересекаемых линией (алгоритм Брезенхема)
     function getLine(x0, z0, x1, z1) {
         let tilesOnLine = [];

@@ -54,7 +54,7 @@ let tools = {
     ];
     cancelIcon = cancelIcon(0.01);
 
-    fireCalc = function(){
+    actCalc = function(){
       let tiles = this.figure.tile.board.tiles;
       for (let x in tiles){
         for (let z in tiles[x]){
@@ -64,16 +64,28 @@ let tools = {
           }
           const shot = calculateShotPath( this.figure.tile, {x: +x, z: +z}, tiles); // +z +x mean convert to int
 
-          console.log(x,z, shot.map(a => a.x + ":" + a.z))
+          // console.log(x,z, shot.map(a => a.x + ":" + a.z))
           if (shot.at(-1) === tile){
 
             let mark = new Mark("shot")
             mark.action = () => {
               this.figure.tile.board.clearMarks();
-              this.fireCalc();
-              for(let tile of shot){
+              this.actCalc();
+              for(let tile of shot.slice(1)){
                 tile.removeMark();
-                tile.addMark(new Mark("shotPath"));
+                if (tile === shot.at(-1) && tile.unshootable()){
+                  let shotEnd = new Mark("shotEnd");
+                  shotEnd.action = () => {
+                    console.log(this);
+                  }
+                  tile.addMark(shotEnd);  
+                } else {
+                  let shotPath = new Mark("shotPath");
+                  shotPath.action = () => {
+                    console.log(this);
+                  }
+                  tile.addMark(shotPath);  
+                }
               }
             };
             tile.addMark(mark);
@@ -93,7 +105,7 @@ let tools = {
       remHUD(this.icon.uuid);
       addHUD(this.cancelIcon, camera, this.iconX, this.iconY);
       this.figure.tile.board.clearMarks();
-      this.fireCalc();
+      this.actCalc();
       this.click = this.cancelAiming
     };
 
@@ -107,9 +119,6 @@ let tools = {
       remHUD(this.icon.uuid);
       remHUD(this.cancelIcon.uuid);
     }
-    action = function (show) {
-      
-    };
     
     constructor (colors, params){
       const GD = mat.greenD;
@@ -337,6 +346,11 @@ class Mark {
                             color: 0xFF0000,
                             radius: 0.3,
                             height: 0.3
+                        },
+                        shotEnd: {
+                            color: 0xFF0000,
+                            radius: 0.5,
+                            height: 0.5
                         }
                     };
       const mark = types[type];
